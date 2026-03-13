@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.urls import URLPattern, path
 
+from .internal_views import InternalOrgRolesView
 from .views import (
     OrgApproveView,
     OrgDeleteView,
@@ -11,6 +12,9 @@ from .views import (
     OrgDocumentDeleteView,
     OrgDocumentListCreateView,
     OrgDocumentUploadView,
+    OrgInviteAcceptView,
+    OrgInviteDetailView,
+    OrgInviteListCreateView,
     OrgListCreateView,
     OrgMembersView,
     OrgReinstateView,
@@ -37,5 +41,13 @@ urlpatterns: list[URLPattern] = [
         "<uuid:org_id>/documents/upload/",
         OrgDocumentUploadView.as_view(),
         name="org-document-upload",
+    ),
+    path("<uuid:org_id>/invites/", OrgInviteListCreateView.as_view(), name="org-invites"),
+    path("invites/<uuid:invite_id>/accept/", OrgInviteAcceptView.as_view(), name="org-invite-accept"),
+    path("invites/<uuid:invite_id>/", OrgInviteDetailView.as_view(), name="org-invite-detail"),
+    path(
+        "internal/users/<uuid:user_id>/org-roles/",
+        InternalOrgRolesView.as_view(),
+        name="internal-org-roles",
     ),
 ]

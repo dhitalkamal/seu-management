@@ -15,6 +15,7 @@ from rest_framework.views import APIView
 from apps.common.api.pagination import StandardPagination
 from apps.common.api.responses import created_response, error_response, success_response
 from apps.common.health import check_database, check_rabbitmq, check_redis
+from apps.common.permissions import IsOrgAdmin, IsOrgOwner, IsSuperAdminFromAllowedIP
 from apps.orgs.application.use_cases.accept_invite import AcceptInviteUseCase
 from apps.orgs.application.use_cases.add_member import AddOrgMemberUseCase
 from apps.orgs.application.use_cases.approve_org import ApproveOrganisationUseCase
@@ -253,7 +254,14 @@ class OrgListCreateView(APIView):
 class OrgDetailView(APIView):
     """Retrieve or update a single organisation by id."""
 
+    # GET is open to any authenticated member; PATCH requires at least admin
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self) -> list:
+        """Return IsOrgAdmin for PATCH; fall back to IsAuthenticated for GET."""
+        if self.request.method == "PATCH":
+            return [IsOrgAdmin()]
+        return super().get_permissions()
 
     @extend_schema(
         tags=["Organisations"],
@@ -290,7 +298,7 @@ class OrgDetailView(APIView):
 class OrgMembersView(APIView):
     """Add a member to an organisation."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsOrgAdmin]
 
     @extend_schema(
         tags=["Organisations"],
@@ -325,7 +333,7 @@ class OrgMembersView(APIView):
 class OrgApproveView(APIView):
     """Approve a pending_review organisation (superadmin only)."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsSuperAdminFromAllowedIP]
 
     @extend_schema(
         tags=["Organisations"],
@@ -347,7 +355,7 @@ class OrgApproveView(APIView):
 class OrgRejectView(APIView):
     """Reject a pending_review organisation (superadmin only)."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsSuperAdminFromAllowedIP]
 
     @extend_schema(
         tags=["Organisations"],
@@ -369,7 +377,7 @@ class OrgRejectView(APIView):
 class OrgSuspendView(APIView):
     """Suspend an active organisation (superadmin only)."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsSuperAdminFromAllowedIP]
 
     @extend_schema(
         tags=["Organisations"],
@@ -391,7 +399,7 @@ class OrgSuspendView(APIView):
 class OrgReinstateView(APIView):
     """Reinstate a suspended organisation (superadmin only)."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsSuperAdminFromAllowedIP]
 
     @extend_schema(
         tags=["Organisations"],
@@ -413,7 +421,7 @@ class OrgReinstateView(APIView):
 class OrgDeleteView(APIView):
     """Soft-delete an organisation (owner only)."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsOrgOwner]
 
     @extend_schema(
         tags=["Organisations"],

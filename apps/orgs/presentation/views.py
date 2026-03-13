@@ -15,21 +15,30 @@ from rest_framework.views import APIView
 from apps.common.api.pagination import StandardPagination
 from apps.common.api.responses import created_response, error_response, success_response
 from apps.common.health import check_database, check_rabbitmq, check_redis
+from apps.orgs.application.use_cases.accept_invite import AcceptInviteUseCase
 from apps.orgs.application.use_cases.add_member import AddOrgMemberUseCase
 from apps.orgs.application.use_cases.approve_org import ApproveOrganisationUseCase
+from apps.orgs.application.use_cases.create_invite import CreateInviteUseCase
 from apps.orgs.application.use_cases.create_org import CreateOrganisationUseCase
+from apps.orgs.application.use_cases.decline_invite import DeclineInviteUseCase
 from apps.orgs.application.use_cases.get_org import GetOrganisationUseCase
+from apps.orgs.application.use_cases.list_invites import ListInvitesUseCase
 from apps.orgs.application.use_cases.list_orgs import ListOrganisationsUseCase
 from apps.orgs.application.use_cases.reinstate_org import ReinstateOrganisationUseCase
 from apps.orgs.application.use_cases.reject_org import RejectOrganisationUseCase
+from apps.orgs.application.use_cases.revoke_invite import RevokeInviteUseCase
 from apps.orgs.application.use_cases.soft_delete_org import SoftDeleteOrganisationUseCase
 from apps.orgs.application.use_cases.suspend_org import SuspendOrganisationUseCase
 from apps.orgs.application.use_cases.update_org import UpdateOrganisationUseCase
-from apps.orgs.infrastructure.repositories import DjangoOrgMemberRepository, DjangoOrgRepository
+from apps.orgs.infrastructure.event_publisher import OrgEventPublisher
+from apps.orgs.infrastructure.repositories import DjangoOrgInviteRepository, DjangoOrgMemberRepository, DjangoOrgRepository
 from apps.orgs.presentation.serializers import (
+    AcceptInviteSerializer,
     AddMemberSerializer,
+    CreateInviteSerializer,
     CreateOrgSerializer,
     OrgDocumentResponseSerializer,
+    OrgInviteResponseSerializer,
     OrgMemberResponseSerializer,
     OrgResponseSerializer,
     UpdateOrgSerializer,
@@ -57,6 +66,15 @@ _UPDATE_ORG_UC = UpdateOrganisationUseCase
 _UPDATE_ORG_SER = UpdateOrgSerializer
 _ADD_MEMBER_SER = AddMemberSerializer
 _MEMBER_RESP_SER = OrgMemberResponseSerializer
+_INVITE_REPO = DjangoOrgInviteRepository
+_CREATE_INVITE_UC = CreateInviteUseCase
+_ACCEPT_INVITE_UC = AcceptInviteUseCase
+_DECLINE_INVITE_UC = DeclineInviteUseCase
+_REVOKE_INVITE_UC = RevokeInviteUseCase
+_LIST_INVITES_UC = ListInvitesUseCase
+_CREATE_INVITE_SER = CreateInviteSerializer
+_INVITE_RESP_SER = OrgInviteResponseSerializer
+_ACCEPT_INVITE_SER = AcceptInviteSerializer
 
 _CHECKS = inline_serializer(
     name="DependencyChecks",
@@ -204,8 +222,9 @@ class OrgListCreateView(APIView):
         ser = _CREATE_ORG_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
+        creator_id = _UUID(str(request.user.id))
         result = _CREATE_ORG_UC(_ORG_REPO(), _MEMBER_REPO()).execute(
-            created_by=_UUID(str(request.user.id)),
+            created_by=creator_id,
             name=d["name"],
             slug=d["slug"],
             contact_email=d["contact_email"],
@@ -221,6 +240,12 @@ class OrgListCreateView(APIView):
             twitter_url=d["twitter_url"],
             instagram_url=d["instagram_url"],
             linkedin_url=d["linkedin_url"],
+        )
+        # notify IAM service so it can seed the owner's cached org roles
+        OrgEventPublisher().publish_member_added(
+            org_id=result.id,
+            user_id=creator_id,
+            role="owner",
         )
         return _CREATED(_ORG_RESP_SER(result).data, request=request)
 
@@ -287,6 +312,12 @@ class OrgMembersView(APIView):
             org_id=org_id,
             user_id=d["user_id"],
             role=d["role"],
+        )
+        # notify IAM service to invalidate any stale cached roles for this user+org
+        OrgEventPublisher().publish_member_added(
+            org_id=org_id,
+            user_id=result.user_id,
+            role=result.role,
         )
         return _CREATED(_MEMBER_RESP_SER(result).data, request=request)
 
@@ -510,3 +541,123 @@ class OrgDocumentUploadView(APIView):
             },
             request=request,
         )
+
+
+# * org invite endpoints
+
+
+class OrgInviteListCreateView(APIView):
+    """List pending invites for an org or send a new invite."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Org Invites"],
+        summary="List pending invites",
+        responses={
+            200: OpenApiResponse(description="Pending invite list.", response=_INVITE_RESP_SER(many=True)),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Organisation not found."),
+        },
+    )
+    def get(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Return all pending invites for the given organisation."""
+        invites = _LIST_INVITES_UC(_ORG_REPO(), _INVITE_REPO()).execute(org_id=org_id)
+        return success_response(_INVITE_RESP_SER(invites, many=True).data, request=request)
+
+    @extend_schema(
+        tags=["Org Invites"],
+        summary="Create an invite",
+        request=_CREATE_INVITE_SER,
+        responses={
+            201: OpenApiResponse(description="Invite created.", response=_INVITE_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Organisation not found."),
+            409: OpenApiResponse(description="Pending invite already exists for this email."),
+        },
+    )
+    def post(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Send an invite to join this organisation."""
+        ser = _CREATE_INVITE_SER(data=request.data)
+        ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        result = _CREATE_INVITE_UC(_ORG_REPO(), _INVITE_REPO()).execute(
+            org_id=org_id,
+            inviter_id=_UUID(str(request.user.id)),
+            invitee_email=d["invitee_email"],
+            role=d["role"],
+        )
+        return _CREATED(_INVITE_RESP_SER(result).data, request=request)
+
+
+class OrgInviteAcceptView(APIView):
+    """Accept a pending invite by token."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Org Invites"],
+        summary="Accept an invite",
+        request=_ACCEPT_INVITE_SER,
+        responses={
+            200: OpenApiResponse(description="Invite accepted; membership created.", response=_INVITE_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Invite not found."),
+            410: OpenApiResponse(description="Invite has expired."),
+            422: OpenApiResponse(description="Invite is not pending."),
+        },
+    )
+    def post(self, request: Request, invite_id: uuid.UUID) -> Response:
+        """Accept the invite and create an org membership."""
+        ser = _ACCEPT_INVITE_SER(data=request.data)
+        ser.is_valid(raise_exception=True)
+        user_id = ser.validated_data["user_id"]
+        result = _ACCEPT_INVITE_UC(_INVITE_REPO(), _MEMBER_REPO()).execute(
+            invite_id=invite_id,
+            user_id=user_id,
+        )
+        # invite carries the role; notify IAM after the membership is created
+        OrgEventPublisher().publish_member_added(
+            org_id=result.org_id,
+            user_id=user_id,
+            role=result.role,
+        )
+        return success_response(_INVITE_RESP_SER(result).data, request=request)
+
+
+class OrgInviteDetailView(APIView):
+    """Decline or revoke a single invite."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Org Invites"],
+        summary="Decline an invite",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Invite declined.", response=_INVITE_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Invite not found."),
+            422: OpenApiResponse(description="Invite is not pending."),
+        },
+    )
+    def post(self, request: Request, invite_id: uuid.UUID) -> Response:
+        """Decline the invite (invitee action)."""
+        result = _DECLINE_INVITE_UC(_INVITE_REPO()).execute(invite_id=invite_id)
+        return success_response(_INVITE_RESP_SER(result).data, request=request)
+
+    @extend_schema(
+        tags=["Org Invites"],
+        summary="Revoke an invite",
+        request=None,
+        responses={
+            204: OpenApiResponse(description="Invite revoked."),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Invite not found."),
+            422: OpenApiResponse(description="Invite is not pending."),
+        },
+    )
+    def delete(self, request: Request, invite_id: uuid.UUID) -> Response:
+        """Revoke the invite (inviter/admin action)."""
+        _REVOKE_INVITE_UC(_INVITE_REPO()).execute(invite_id=invite_id)
+        return Response(status=204)

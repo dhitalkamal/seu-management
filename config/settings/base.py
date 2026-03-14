@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "apps.volunteers",
     "apps.community",
     "apps.marketing",
+    "apps.moderation",
 ]
 
 MIDDLEWARE = [

@@ -55,10 +55,13 @@ class Organisation(models.Model):
     linkedin_url = models.URLField(blank=True)
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING_REVIEW)
     is_verified = models.BooleanField(default=False)
-    # ! subscription plan — determines platform fee rate and feature limits
+    # ! subscription plan - determines platform fee rate and feature limits
     plan = models.CharField(max_length=20, choices=Plan.choices, default=Plan.FREE)
     plan_expires_at = models.DateTimeField(null=True, blank=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
+    # * populated by approve/reject actions; null until a decision is made
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.UUIDField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -89,6 +92,8 @@ class Organisation(models.Model):
             deleted_at=self.deleted_at,
             plan=self.plan,
             plan_expires_at=self.plan_expires_at,
+            reviewed_at=self.reviewed_at,
+            reviewed_by=self.reviewed_by,
         )
 
     @classmethod
@@ -117,6 +122,8 @@ class Organisation(models.Model):
             deleted_at=entity.deleted_at,
             plan=entity.plan,
             plan_expires_at=entity.plan_expires_at,
+            reviewed_at=entity.reviewed_at,
+            reviewed_by=entity.reviewed_by,
         )
 
 

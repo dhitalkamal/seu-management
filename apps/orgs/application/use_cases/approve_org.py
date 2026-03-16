@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import uuid
 
+from django.utils import timezone
+
 from apps.orgs.domain.entities import OrgEntity
 from apps.orgs.domain.exceptions import InvalidOrgStatusTransitionError
 from apps.orgs.domain.repositories import IOrganisationRepository
@@ -18,9 +20,11 @@ class ApproveOrganisationUseCase:
     def __init__(self, org_repo: IOrganisationRepository) -> None:
         self._orgs = org_repo
 
-    def execute(self, *, org_id: uuid.UUID) -> OrgEntity:
+    def execute(self, *, org_id: uuid.UUID, reviewed_by: uuid.UUID | None = None) -> OrgEntity:
         """
         Validate current status then set status=active.
+
+        Sets reviewed_at to now and optionally records the reviewer's user id.
 
         @raises OrgNotFoundError if the org does not exist
         @raises InvalidOrgStatusTransitionError if status is not pending_review
@@ -30,4 +34,6 @@ class ApproveOrganisationUseCase:
             raise InvalidOrgStatusTransitionError(f"Cannot approve an organisation with status '{org.status}'.")
         org.status = "active"
         org.is_verified = True
+        org.reviewed_at = timezone.now()
+        org.reviewed_by = reviewed_by
         return self._orgs.update(org)

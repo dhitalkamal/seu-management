@@ -58,6 +58,9 @@ class DjangoOrgRepository(IOrganisationRepository):
         obj.deleted_at = entity.deleted_at
         obj.plan = entity.plan
         obj.plan_expires_at = entity.plan_expires_at
+        # * review audit trail
+        obj.reviewed_at = entity.reviewed_at
+        obj.reviewed_by = entity.reviewed_by
         obj.save()
         return obj.to_entity()
 

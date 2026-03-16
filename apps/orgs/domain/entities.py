@@ -33,9 +33,12 @@ class OrgEntity:
     instagram_url: str = ""
     linkedin_url: str = ""
     deleted_at: datetime | None = None
-    # ! subscription plan — determines platform fee and feature limits
+    # ! subscription plan - determines platform fee and feature limits
     plan: str = "free"
     plan_expires_at: datetime | None = None
+    # * set by approve/reject use cases to record when the review decision was made
+    reviewed_at: datetime | None = None
+    reviewed_by: uuid.UUID | None = None
 
 
 @dataclass(slots=True)

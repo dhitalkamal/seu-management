@@ -44,7 +44,7 @@ python_version = "3.13"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["apps.*.infrastructure.models", "apps.*.infrastructure.support_models"]
+module = ["apps.*.infrastructure.models", "apps.*.infrastructure.support_models", "apps.compliance.models"]
 ignore_errors = true
 
 [[tool.mypy.overrides]]
@@ -68,5 +68,6 @@ module = [
     "apps.community.presentation.views",
     "apps.moderation.presentation.views",
     "apps.moderation.tests.unit.fakes",
+    "apps.compliance.presentation.views",
 ]
 ignore_errors = true

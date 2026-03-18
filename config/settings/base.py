@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "apps.community",
     "apps.marketing",
     "apps.moderation",
+    "apps.compliance",
 ]
 
 MIDDLEWARE = [

@@ -24,6 +24,7 @@ urlpatterns = [
     path("api/v1/communities/", include("apps.community.presentation.urls")),
     path("api/v1/campaigns/", include("apps.marketing.presentation.urls")),
     path("api/v1/moderation/", include("apps.moderation.presentation.urls")),
+    path("api/v1/compliance/", include("apps.compliance.presentation.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     # Use relative URL so the browser resolves it through the correct nginx prefix
     path(

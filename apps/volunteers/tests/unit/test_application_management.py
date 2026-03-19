@@ -12,6 +12,7 @@ from apps.volunteers.application.use_cases.list_applications import ListApplicat
 from apps.volunteers.application.use_cases.reject_application import RejectApplicationUseCase
 from apps.volunteers.domain.exceptions import ApplicationNotFoundError
 from apps.volunteers.tests.unit.fakes import (
+    FakeEventPublisher,
     FakeVolunteerApplicationRepository,
     make_application,
 )
@@ -21,6 +22,28 @@ def test_approve_sets_status_approved():
     """Approving a pending application sets status=approved."""
     app = make_application(status="pending")
     repo = FakeVolunteerApplicationRepository([app])
+    result = ApproveApplicationUseCase(repo).execute(application_id=app.id)
+    assert result.status == "approved"
+
+
+def test_approve_publishes_volunteer_application_approved_event():
+    """Approving an application publishes volunteer.application.approved with user_id and event_id."""
+    app = make_application(status="pending")
+    repo = FakeVolunteerApplicationRepository([app])
+    publisher = FakeEventPublisher()
+    ApproveApplicationUseCase(repo, publisher).execute(application_id=app.id)
+    assert len(publisher.events) == 1
+    event = publisher.events[0]
+    assert event["type"] == "volunteer.application.approved"
+    assert event["payload"]["user_id"] == str(app.user_id)
+    assert event["payload"]["event_id"] == str(app.event_id)
+
+
+def test_approve_without_publisher_does_not_raise():
+    """Approving without a publisher succeeds silently (publisher is optional)."""
+    app = make_application(status="pending")
+    repo = FakeVolunteerApplicationRepository([app])
+    # no publisher passed -- must not raise
     result = ApproveApplicationUseCase(repo).execute(application_id=app.id)
     assert result.status == "approved"
 

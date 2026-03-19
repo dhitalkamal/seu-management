@@ -10,7 +10,7 @@ from apps.volunteers.domain.repositories import IEventPublisher
 class RabbitMQEventPublisher(IEventPublisher):
     """Publishes domain events to a RabbitMQ topic exchange."""
 
-    def __init__(self, connection_url: str, exchange: str = "sansaar.events") -> None:
+    def __init__(self, connection_url: str, exchange: str = "sansaar") -> None:
         import pika  # type: ignore[import-untyped]
 
         self._exchange = exchange

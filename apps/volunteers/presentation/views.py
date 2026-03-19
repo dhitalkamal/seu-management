@@ -195,8 +195,8 @@ class VolunteerApplicationApproveView(APIView):
         },
     )
     def post(self, request: Request, application_id: uuid.UUID) -> Response:
-        """Set application status to approved."""
-        result = _APPROVE_UC(_APP_REPO()).execute(application_id=application_id)
+        """Set application status to approved and notify participation-service."""
+        result = _APPROVE_UC(_APP_REPO(), _get_publisher()).execute(application_id=application_id)
         return success_response(_APP_RESP_SER(result).data, request=request)
 
 

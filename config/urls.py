@@ -17,6 +17,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/health/", HealthCheckView.as_view(), name="health"),
     path("api/v1/organisations/", include("apps.orgs.presentation.urls")),
+    path("api/v1/organizations/", include("apps.orgs.presentation.urls")),  # alias for American spelling
     path("api/v1/tickets/", include("apps.orgs.presentation.ticket_urls")),
     path("api/v1/admin/analytics/", OrgAnalyticsView.as_view(), name="admin-analytics"),
     path("api/v1/venues/", include("apps.venues.presentation.urls")),

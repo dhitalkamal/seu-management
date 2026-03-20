@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from apps.marketing.domain.entities import AudienceSegmentEntity, CampaignEntity
 from apps.marketing.domain.exceptions import CampaignNotFoundError
 from apps.marketing.domain.repositories import IAudienceSegmentRepository, ICampaignRepository
+from apps.marketing.infrastructure.event_publisher import MarketingEventPublisher
 
 
 def make_campaign(status: str = "draft") -> CampaignEntity:
@@ -74,3 +75,14 @@ class FakeAudienceSegmentRepository(IAudienceSegmentRepository):
     def create(self, segment: AudienceSegmentEntity) -> None:
         """Store the segment."""
         self._store[segment.id] = segment
+
+
+class FakeMarketingEventPublisher(MarketingEventPublisher):
+    """Records published marketing events for assertion in tests."""
+
+    def __init__(self) -> None:
+        self.events: list[dict] = []
+
+    def _publish(self, routing_key: str, payload: dict) -> None:
+        """Record without touching RabbitMQ."""
+        self.events.append({"routing_key": routing_key, "payload": payload})

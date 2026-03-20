@@ -1,4 +1,4 @@
-"""RabbitMQ event publisher for org membership domain events."""
+"""RabbitMQ event publisher for org domain events."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ _EXCHANGE_TYPE = "topic"
 
 
 class OrgEventPublisher:
-    """Publishes org.member.* events to the sansaar topic exchange."""
+    """Publishes org.* events to the sansaar topic exchange."""
 
     def _publish(self, routing_key: str, payload: dict) -> None:
         """
@@ -124,5 +124,80 @@ class OrgEventPublisher:
                 "user_id": str(user_id),
                 "old_role": old_role,
                 "new_role": new_role,
+            },
+        )
+
+    def publish_org_created(
+        self,
+        *,
+        org_id: uuid.UUID,
+        org_name: str,
+        creator_id: uuid.UUID,
+        contact_email: str,
+    ) -> None:
+        """
+        Publish an org.created event after a new organisation is persisted.
+
+        @param org_id         - the new organisation's UUID
+        @param org_name       - the human-readable name of the organisation
+        @param creator_id     - UUID of the user who created it
+        @param contact_email  - primary contact email, forwarded to notification-service
+        """
+        self._publish(
+            "org.created",
+            {
+                "org_id": str(org_id),
+                "org_name": org_name,
+                "creator_id": str(creator_id),
+                "contact_email": contact_email,
+            },
+        )
+
+    def publish_org_approved(
+        self,
+        *,
+        org_id: uuid.UUID,
+        org_name: str,
+        contact_email: str,
+    ) -> None:
+        """
+        Publish an org.approved event after a superadmin approves the organisation.
+
+        @param org_id         - the approved organisation's UUID
+        @param org_name       - the human-readable name of the organisation
+        @param contact_email  - primary contact email, forwarded to notification-service
+        """
+        self._publish(
+            "org.approved",
+            {
+                "org_id": str(org_id),
+                "org_name": org_name,
+                "contact_email": contact_email,
+            },
+        )
+
+    def publish_org_rejected(
+        self,
+        *,
+        org_id: uuid.UUID,
+        org_name: str,
+        reason: str,
+        contact_email: str = "",
+    ) -> None:
+        """
+        Publish an org.rejected event after a superadmin rejects the organisation.
+
+        @param org_id         - the rejected organisation's UUID
+        @param org_name       - the human-readable name of the organisation
+        @param reason         - free-text reason for rejection shown to the org owner
+        @param contact_email  - primary contact email, forwarded to notification-service
+        """
+        self._publish(
+            "org.rejected",
+            {
+                "org_id": str(org_id),
+                "org_name": org_name,
+                "reason": reason,
+                "contact_email": contact_email,
             },
         )

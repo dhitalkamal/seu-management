@@ -66,6 +66,41 @@ def test_send_missing_campaign_raises():
         SendCampaignUseCase(FakeCampaignRepository()).execute(campaign_id=uuid.uuid4())
 
 
+def test_send_campaign_publishes_event_with_user_emails():
+    """SendCampaignUseCase publishes marketing.campaign.sent with the user_emails list."""
+    from apps.marketing.application.use_cases.send_campaign import SendCampaignUseCase
+    from apps.marketing.tests.unit.fakes import FakeMarketingEventPublisher
+
+    campaign = make_campaign(status="draft")
+    repo = FakeCampaignRepository([campaign])
+    publisher = FakeMarketingEventPublisher()
+    org_id = uuid.uuid4()
+    emails = ["a@test.com", "b@test.com"]
+
+    SendCampaignUseCase(repo, publisher=publisher).execute(
+        campaign_id=campaign.id,
+        user_emails=emails,
+        org_id=org_id,
+    )
+
+    assert len(publisher.events) == 1
+    event = publisher.events[0]
+    assert event["routing_key"] == "marketing.campaign.sent"
+    assert event["payload"]["user_emails"] == emails
+    assert event["payload"]["org_id"] == str(org_id)
+    assert event["payload"]["subject"] == campaign.subject
+
+
+def test_send_campaign_without_publisher_does_not_raise():
+    """SendCampaignUseCase with no publisher still marks sent successfully."""
+    from apps.marketing.application.use_cases.send_campaign import SendCampaignUseCase
+
+    campaign = make_campaign(status="draft")
+    repo = FakeCampaignRepository([campaign])
+    result = SendCampaignUseCase(repo, publisher=None).execute(campaign_id=campaign.id)
+    assert result.status == "sent"
+
+
 def test_create_segment_success():
     """Creating a segment returns an AudienceSegmentEntity."""
     from apps.marketing.application.use_cases.create_segment import CreateSegmentUseCase

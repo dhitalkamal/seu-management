@@ -242,11 +242,19 @@ class OrgListCreateView(APIView):
             instagram_url=d["instagram_url"],
             linkedin_url=d["linkedin_url"],
         )
+        publisher = OrgEventPublisher()
         # notify IAM service so it can seed the owner's cached org roles
-        OrgEventPublisher().publish_member_added(
+        publisher.publish_member_added(
             org_id=result.id,
             user_id=creator_id,
             role="owner",
+        )
+        # broadcast org lifecycle event for notification-service and analytics
+        publisher.publish_org_created(
+            org_id=result.id,
+            org_name=result.name,
+            creator_id=creator_id,
+            contact_email=result.contact_email,
         )
         return _CREATED(_ORG_RESP_SER(result).data, request=request)
 
@@ -349,6 +357,11 @@ class OrgApproveView(APIView):
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
         """Transition the organisation from pending_review to active."""
         result = _APPROVE_UC(_ORG_REPO()).execute(org_id=org_id)
+        OrgEventPublisher().publish_org_approved(
+            org_id=result.id,
+            org_name=result.name,
+            contact_email=result.contact_email,
+        )
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
@@ -371,6 +384,12 @@ class OrgRejectView(APIView):
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
         """Transition the organisation from pending_review to suspended."""
         result = _REJECT_UC(_ORG_REPO()).execute(org_id=org_id)
+        OrgEventPublisher().publish_org_rejected(
+            org_id=result.id,
+            org_name=result.name,
+            reason="",
+            contact_email=result.contact_email,
+        )
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 

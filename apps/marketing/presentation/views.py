@@ -17,6 +17,7 @@ from apps.marketing.application.use_cases.list_campaigns import ListCampaignsUse
 from apps.marketing.application.use_cases.list_segments import ListSegmentsUseCase
 from apps.marketing.application.use_cases.send_campaign import SendCampaignUseCase
 from apps.marketing.domain.exceptions import CampaignAlreadySentError, CampaignNotFoundError
+from apps.marketing.infrastructure.event_publisher import MarketingEventPublisher
 from apps.marketing.infrastructure.repositories import (
     DjangoAudienceSegmentRepository,
     DjangoCampaignRepository,
@@ -89,9 +90,31 @@ class CampaignSendView(APIView):
         },
     )
     def post(self, request: Request, campaign_id: uuid.UUID) -> Response:
-        """Transition the campaign to sent status."""
+        """Transition the campaign to sent status and publish the delivery event."""
+        # * the caller resolves the recipient list before sending;
+        #   user_emails is optional -- pass [] when no explicit list provided
+        user_emails: list[str] = request.data.get("user_emails", [])
+        org_id_raw: str = request.data.get("org_id", "")
+        org_id: uuid.UUID | None = None
+        if org_id_raw:
+            try:
+                org_id = uuid.UUID(org_id_raw)
+            except ValueError:
+                return error_response(
+                    code="ERR_CAMPAIGN_INVALID_ORG",
+                    message="Invalid org_id format.",
+                    http_status=400,
+                    request=request,
+                )
         try:
-            campaign = _SEND_CAMPAIGN_UC(_CAMPAIGN_REPO()).execute(campaign_id=campaign_id)
+            campaign = _SEND_CAMPAIGN_UC(
+                _CAMPAIGN_REPO(),
+                publisher=MarketingEventPublisher(),
+            ).execute(
+                campaign_id=campaign_id,
+                user_emails=user_emails,
+                org_id=org_id,
+            )
         except CampaignNotFoundError as exc:
             return error_response(
                 code="ERR_CAMPAIGN_NOT_FOUND",

@@ -51,3 +51,18 @@ class OrgMemberEntity:
     role: str
     is_active: bool
     joined_at: datetime
+
+
+@dataclass(slots=True)
+class OrgInviteEntity:
+    """An invitation to join an organisation sent to an email address."""
+
+    id: uuid.UUID
+    org_id: uuid.UUID
+    inviter_id: uuid.UUID
+    invitee_email: str
+    role: str
+    status: str  # pending | accepted | declined | revoked | expired
+    created_at: datetime
+    expires_at: datetime
+    accepted_by: uuid.UUID | None = None

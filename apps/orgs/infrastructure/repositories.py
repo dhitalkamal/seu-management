@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import uuid
 
-from apps.orgs.domain.entities import OrgEntity, OrgMemberEntity
-from apps.orgs.domain.exceptions import OrgNotFoundError
-from apps.orgs.domain.repositories import IOrganisationRepository, IOrgMemberRepository
-from apps.orgs.infrastructure.models import Organisation, OrgDocument, OrgMember
+from apps.orgs.domain.entities import OrgEntity, OrgInviteEntity, OrgMemberEntity
+from apps.orgs.domain.exceptions import InviteNotFoundError, OrgNotFoundError
+from apps.orgs.domain.repositories import IOrganisationRepository, IOrgInviteRepository, IOrgMemberRepository
+from apps.orgs.infrastructure.models import Organisation, OrgDocument, OrgInvite, OrgMember
 
 
 class DjangoOrgRepository(IOrganisationRepository):
@@ -111,3 +111,40 @@ class DjangoOrgDocumentRepository:
     def delete(self, doc_id: uuid.UUID) -> None:
         """Delete a document by primary key."""
         OrgDocument.objects.filter(pk=doc_id).delete()
+
+
+class DjangoOrgInviteRepository(IOrgInviteRepository):
+    """Persists OrgInvite entities using the Django ORM."""
+
+    def create(self, entity: OrgInviteEntity) -> OrgInviteEntity:
+        """Persist a new invite and return the saved entity."""
+        obj = OrgInvite.from_entity(entity)
+        obj.save(using="default")
+        return obj.to_entity()
+
+    def get_by_id(self, invite_id: uuid.UUID) -> OrgInviteEntity:
+        """Fetch by primary key. Raises InviteNotFoundError if absent."""
+        try:
+            return OrgInvite.objects.get(id=invite_id).to_entity()
+        except OrgInvite.DoesNotExist:
+            raise InviteNotFoundError("Invite not found.")
+
+    def update(self, entity: OrgInviteEntity) -> OrgInviteEntity:
+        """Overwrite status and accepted_by on the stored row."""
+        OrgInvite.objects.filter(id=entity.id).update(
+            status=entity.status,
+            accepted_by=entity.accepted_by,
+        )
+        return entity
+
+    def list_pending_for_org(self, org_id: uuid.UUID) -> list[OrgInviteEntity]:
+        """Return all pending invites for an org, newest first."""
+        qs = OrgInvite.objects.filter(org_id=org_id, status="pending").order_by("-created_at")
+        return [obj.to_entity() for obj in qs]
+
+    def get_pending_by_email(self, org_id: uuid.UUID, email: str) -> OrgInviteEntity | None:
+        """Return the pending invite for this email at this org, or None."""
+        try:
+            return OrgInvite.objects.get(org_id=org_id, invitee_email__iexact=email, status="pending").to_entity()
+        except OrgInvite.DoesNotExist:
+            return None

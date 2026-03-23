@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from abc import ABC, abstractmethod
 
-from apps.orgs.domain.entities import OrgEntity, OrgMemberEntity
+from apps.orgs.domain.entities import OrgEntity, OrgInviteEntity, OrgMemberEntity
 
 
 class IOrganisationRepository(ABC):
@@ -35,3 +35,22 @@ class IOrgMemberRepository(ABC):
 
     @abstractmethod
     def exists(self, org_id: uuid.UUID, user_id: uuid.UUID) -> bool: ...
+
+
+class IOrgInviteRepository(ABC):
+    """Persistence contract for OrgInvite records."""
+
+    @abstractmethod
+    def create(self, entity: OrgInviteEntity) -> OrgInviteEntity: ...
+
+    @abstractmethod
+    def get_by_id(self, invite_id: uuid.UUID) -> OrgInviteEntity: ...
+
+    @abstractmethod
+    def update(self, entity: OrgInviteEntity) -> OrgInviteEntity: ...
+
+    @abstractmethod
+    def list_pending_for_org(self, org_id: uuid.UUID) -> list[OrgInviteEntity]: ...
+
+    @abstractmethod
+    def get_pending_by_email(self, org_id: uuid.UUID, email: str) -> OrgInviteEntity | None: ...

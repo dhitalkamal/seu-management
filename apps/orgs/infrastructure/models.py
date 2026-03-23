@@ -6,7 +6,7 @@ import uuid
 
 from django.db import models
 
-from apps.orgs.domain.entities import OrgEntity, OrgMemberEntity
+from apps.orgs.domain.entities import OrgEntity, OrgInviteEntity, OrgMemberEntity
 
 
 class Organisation(models.Model):
@@ -219,3 +219,59 @@ class OrgDocument(models.Model):
     file_name = models.CharField(max_length=255)
     file_size = models.PositiveIntegerField(default=0)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+
+class OrgInvite(models.Model):
+    """An invitation to join an organisation sent to an email address."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        ACCEPTED = "accepted", "Accepted"
+        DECLINED = "declined", "Declined"
+        REVOKED = "revoked", "Revoked"
+        EXPIRED = "expired", "Expired"
+
+    class Meta:
+        db_table = '"orgs"."org_invite"'
+        indexes = [
+            models.Index(fields=["org_id", "status"], name="idx_org_invite_org_status"),
+            models.Index(fields=["invitee_email", "status"], name="idx_org_invite_email"),
+        ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    org_id = models.UUIDField()
+    inviter_id = models.UUIDField()
+    invitee_email = models.EmailField()
+    role = models.CharField(max_length=20, default="member")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    accepted_by = models.UUIDField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def to_entity(self) -> OrgInviteEntity:
+        """Map this ORM row to a pure-Python OrgInviteEntity."""
+        return OrgInviteEntity(
+            id=self.id,
+            org_id=self.org_id,
+            inviter_id=self.inviter_id,
+            invitee_email=self.invitee_email,
+            role=self.role,
+            status=self.status,
+            created_at=self.created_at,
+            expires_at=self.expires_at,
+            accepted_by=self.accepted_by,
+        )
+
+    @classmethod
+    def from_entity(cls, entity: OrgInviteEntity) -> "OrgInvite":
+        """Build an unsaved ORM instance from an OrgInviteEntity."""
+        return cls(
+            id=entity.id,
+            org_id=entity.org_id,
+            inviter_id=entity.inviter_id,
+            invitee_email=entity.invitee_email,
+            role=entity.role,
+            status=entity.status,
+            accepted_by=entity.accepted_by,
+            expires_at=entity.expires_at,
+        )

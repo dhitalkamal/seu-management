@@ -118,3 +118,30 @@ class UploadOrgDocumentSerializer(serializers.Serializer):
     file_url = serializers.URLField()
     file_name = serializers.CharField(max_length=255)
     file_size = serializers.IntegerField(required=False, default=0)
+
+
+class CreateInviteSerializer(serializers.Serializer):
+    """Payload for inviting a user to an organisation."""
+
+    invitee_email = serializers.EmailField()
+    role = serializers.ChoiceField(choices=["owner", "admin", "manager", "member"])
+
+
+class AcceptInviteSerializer(serializers.Serializer):
+    """Payload for accepting an organisation invite."""
+
+    user_id = serializers.UUIDField()
+
+
+class OrgInviteResponseSerializer(serializers.Serializer):
+    """Public shape of an organisation invite resource."""
+
+    id = serializers.UUIDField()
+    org_id = serializers.UUIDField()
+    inviter_id = serializers.UUIDField()
+    invitee_email = serializers.EmailField()
+    role = serializers.CharField()
+    status = serializers.CharField()
+    created_at = serializers.DateTimeField()
+    expires_at = serializers.DateTimeField()
+    accepted_by = serializers.UUIDField(allow_null=True)

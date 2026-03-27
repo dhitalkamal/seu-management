@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from apps.venues.domain.entities import VenueEntity, VenueSpaceEntity
-from apps.venues.domain.exceptions import VenueNotFoundError
-from apps.venues.domain.repositories import IVenueRepository, IVenueSpaceRepository
+from apps.venues.domain.entities import VenueBookingEntity, VenueEntity, VenueSpaceEntity
+from apps.venues.domain.exceptions import VenueBookingNotFoundError, VenueNotFoundError
+from apps.venues.domain.repositories import IVenueBookingRepository, IVenueRepository, IVenueSpaceRepository
 
 
 def make_venue(organisation_id: uuid.UUID | None = None) -> VenueEntity:
@@ -76,3 +76,68 @@ class FakeVenueSpaceRepository(IVenueSpaceRepository):
     def create(self, space: VenueSpaceEntity) -> None:
         """Store the space."""
         self._store[space.id] = space
+
+
+def make_booking(
+    *,
+    venue_id: uuid.UUID | None = None,
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
+    status: str = "confirmed",
+) -> VenueBookingEntity:
+    """Build a VenueBookingEntity with sensible defaults."""
+    now = datetime.now(timezone.utc)
+    return VenueBookingEntity(
+        id=uuid.uuid4(),
+        venue_id=venue_id or uuid.uuid4(),
+        event_id=uuid.uuid4(),
+        booked_by=uuid.uuid4(),
+        start_time=start_time or now + timedelta(hours=1),
+        end_time=end_time or now + timedelta(hours=2),
+        status=status,
+        created_at=now,
+    )
+
+
+class FakeVenueBookingRepository(IVenueBookingRepository):
+    """In-memory venue booking store."""
+
+    def __init__(self, bookings: list[VenueBookingEntity] | None = None) -> None:
+        self._store: dict[uuid.UUID, VenueBookingEntity] = {b.id: b for b in (bookings or [])}
+
+    def list_by_venue(self, venue_id: uuid.UUID) -> list[VenueBookingEntity]:
+        """Return all bookings for a venue."""
+        return [b for b in self._store.values() if b.venue_id == venue_id]
+
+    def get_by_id(self, booking_id: uuid.UUID) -> VenueBookingEntity:
+        """Raise VenueBookingNotFoundError if not found."""
+        b = self._store.get(booking_id)
+        if b is None:
+            raise VenueBookingNotFoundError("Booking not found.")
+        return b
+
+    def find_conflicts(
+        self,
+        venue_id: uuid.UUID,
+        start_time: object,
+        end_time: object,
+    ) -> list[VenueBookingEntity]:
+        """Return confirmed bookings overlapping the given time range."""
+        return [
+            b
+            for b in self._store.values()
+            if b.venue_id == venue_id
+            and b.status == "confirmed"
+            and b.start_time < end_time  # type: ignore[operator]
+            and b.end_time > start_time  # type: ignore[operator]
+        ]
+
+    def create(self, booking: VenueBookingEntity) -> VenueBookingEntity:
+        """Persist and return the booking."""
+        self._store[booking.id] = booking
+        return booking
+
+    def update(self, booking: VenueBookingEntity) -> VenueBookingEntity:
+        """Update and return the booking."""
+        self._store[booking.id] = booking
+        return booking

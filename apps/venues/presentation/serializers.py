@@ -65,3 +65,24 @@ class VenueSpaceResponseSerializer(serializers.Serializer):
     capacity = serializers.IntegerField()
     floor = serializers.CharField()
     created_at = serializers.DateTimeField()
+
+
+class CreateVenueBookingSerializer(serializers.Serializer):
+    """Request body for creating a venue booking."""
+
+    event_id = serializers.UUIDField()
+    start_time = serializers.DateTimeField()
+    end_time = serializers.DateTimeField()
+
+
+class VenueBookingResponseSerializer(serializers.Serializer):
+    """Public shape of a venue booking resource."""
+
+    id = serializers.UUIDField()
+    venue_id = serializers.UUIDField()
+    event_id = serializers.UUIDField()
+    booked_by = serializers.UUIDField()
+    start_time = serializers.DateTimeField()
+    end_time = serializers.DateTimeField()
+    status = serializers.CharField()
+    created_at = serializers.DateTimeField()

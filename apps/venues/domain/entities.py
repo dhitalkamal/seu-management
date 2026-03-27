@@ -38,3 +38,17 @@ class VenueSpaceEntity:
     capacity: int
     floor: str
     created_at: datetime
+
+
+@dataclass(slots=True)
+class VenueBookingEntity:
+    """A time-bound booking of a venue for a specific event."""
+
+    id: uuid.UUID
+    venue_id: uuid.UUID
+    event_id: uuid.UUID
+    booked_by: uuid.UUID
+    start_time: datetime
+    end_time: datetime
+    status: str
+    created_at: datetime

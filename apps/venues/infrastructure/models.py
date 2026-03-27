@@ -6,7 +6,7 @@ import uuid
 
 from django.db import models
 
-from apps.venues.domain.entities import VenueEntity, VenueSpaceEntity
+from apps.venues.domain.entities import VenueBookingEntity, VenueEntity, VenueSpaceEntity
 
 
 class Venue(models.Model):
@@ -103,4 +103,34 @@ class VenueSpace(models.Model):
             name=entity.name,
             capacity=entity.capacity,
             floor=entity.floor,
+        )
+
+
+class VenueBooking(models.Model):
+    """A time-bound reservation of a venue for a specific event."""
+
+    class Meta:
+        db_table = '"venues"."venue_booking"'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    venue_id = models.UUIDField(db_index=True)
+    event_id = models.UUIDField()
+    booked_by = models.UUIDField()
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    # confirmed | cancelled
+    status = models.CharField(max_length=20, default="confirmed")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def to_entity(self) -> VenueBookingEntity:
+        """Map this ORM row to a pure-Python VenueBookingEntity."""
+        return VenueBookingEntity(
+            id=self.id,
+            venue_id=self.venue_id,
+            event_id=self.event_id,
+            booked_by=self.booked_by,
+            start_time=self.start_time,
+            end_time=self.end_time,
+            status=self.status,
+            created_at=self.created_at,
         )

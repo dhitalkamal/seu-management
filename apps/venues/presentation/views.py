@@ -12,21 +12,27 @@ from rest_framework.views import APIView
 
 from apps.common.api.responses import created_response, error_response, success_response
 from apps.venues.application.use_cases.add_space import AddVenueSpaceUseCase
+from apps.venues.application.use_cases.cancel_booking import CancelBookingUseCase
+from apps.venues.application.use_cases.create_booking import CreateBookingUseCase
 from apps.venues.application.use_cases.create_venue import CreateVenueUseCase
 from apps.venues.application.use_cases.delete_venue import DeleteVenueUseCase
 from apps.venues.application.use_cases.get_venue import GetVenueUseCase
+from apps.venues.application.use_cases.list_bookings import ListVenueBookingsUseCase
 from apps.venues.application.use_cases.list_spaces import ListVenueSpacesUseCase
 from apps.venues.application.use_cases.list_venues import ListVenuesUseCase
 from apps.venues.application.use_cases.update_venue import UpdateVenueUseCase
-from apps.venues.domain.exceptions import VenueNotFoundError
+from apps.venues.domain.exceptions import VenueBookingNotFoundError, VenueConflictError, VenueNotFoundError
 from apps.venues.infrastructure.repositories import (
+    DjangoVenueBookingRepository,
     DjangoVenueRepository,
     DjangoVenueSpaceRepository,
 )
 from apps.venues.presentation.serializers import (
+    CreateVenueBookingSerializer,
     CreateVenueSerializer,
     CreateVenueSpaceSerializer,
     UpdateVenueSerializer,
+    VenueBookingResponseSerializer,
     VenueResponseSerializer,
     VenueSpaceResponseSerializer,
 )
@@ -34,6 +40,7 @@ from apps.venues.presentation.serializers import (
 _CREATED = created_response
 _REPO = DjangoVenueRepository
 _SPACE_REPO = DjangoVenueSpaceRepository
+_BOOKING_REPO = DjangoVenueBookingRepository
 _LIST_UC = ListVenuesUseCase
 _CREATE_UC = CreateVenueUseCase
 _GET_UC = GetVenueUseCase
@@ -41,6 +48,9 @@ _UPDATE_UC = UpdateVenueUseCase
 _DELETE_UC = DeleteVenueUseCase
 _LIST_SPACES_UC = ListVenueSpacesUseCase
 _ADD_SPACE_UC = AddVenueSpaceUseCase
+_CREATE_BOOKING_UC = CreateBookingUseCase
+_LIST_BOOKINGS_UC = ListVenueBookingsUseCase
+_CANCEL_BOOKING_UC = CancelBookingUseCase
 
 
 class VenueListCreateView(APIView):
@@ -203,3 +213,75 @@ class VenueSpaceListCreateView(APIView):
         except VenueNotFoundError as exc:
             return error_response(code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request)
         return _CREATED(VenueSpaceResponseSerializer(space).data, request=request)
+
+
+class VenueBookingListCreateView(APIView):
+    """GET /venues/{venue_id}/bookings/ - list; POST - create booking."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Venues"],
+        summary="List venue bookings",
+        responses={
+            200: VenueBookingResponseSerializer(many=True),
+            404: OpenApiResponse(description="Venue not found."),
+        },
+    )
+    def get(self, request: Request, venue_id: uuid.UUID) -> Response:
+        """Return all bookings for the venue ordered by start_time."""
+        bookings = _LIST_BOOKINGS_UC(_BOOKING_REPO()).execute(venue_id=venue_id)
+        return success_response(VenueBookingResponseSerializer(bookings, many=True).data, request=request)
+
+    @extend_schema(
+        tags=["Venues"],
+        summary="Create a venue booking",
+        description=("Book a venue for a specific event and time range. Returns 409 if any confirmed booking overlaps the requested time."),
+        request=CreateVenueBookingSerializer,
+        responses={
+            201: VenueBookingResponseSerializer,
+            404: OpenApiResponse(description="Venue not found."),
+            409: OpenApiResponse(description="Booking conflict."),
+            422: OpenApiResponse(description="Validation error."),
+        },
+    )
+    def post(self, request: Request, venue_id: uuid.UUID) -> Response:
+        """Validate, check conflicts, and persist the booking."""
+        ser = CreateVenueBookingSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        try:
+            booking = _CREATE_BOOKING_UC(_REPO(), _BOOKING_REPO()).execute(
+                venue_id=venue_id,
+                event_id=d["event_id"],
+                booked_by=uuid.UUID(str(request.user.id)),
+                start_time=d["start_time"],
+                end_time=d["end_time"],
+            )
+        except VenueNotFoundError as exc:
+            return error_response(code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request)
+        except VenueConflictError as exc:
+            return error_response(code="ERR_VENUE_CONFLICT", message=str(exc), http_status=409, request=request)
+        return _CREATED(VenueBookingResponseSerializer(booking).data, request=request)
+
+
+class VenueBookingDetailView(APIView):
+    """DELETE /venues/{venue_id}/bookings/{booking_id}/ - cancel a booking."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Venues"],
+        summary="Cancel a venue booking",
+        responses={
+            200: OpenApiResponse(description="Booking cancelled."),
+            404: OpenApiResponse(description="Booking not found."),
+        },
+    )
+    def delete(self, request: Request, venue_id: uuid.UUID, booking_id: uuid.UUID) -> Response:
+        """Set the booking status to cancelled."""
+        try:
+            _CANCEL_BOOKING_UC(_BOOKING_REPO()).execute(booking_id=booking_id)
+        except VenueBookingNotFoundError as exc:
+            return error_response(code="ERR_BOOKING_NOT_FOUND", message=str(exc), http_status=404, request=request)
+        return success_response({"cancelled": True}, request=request)

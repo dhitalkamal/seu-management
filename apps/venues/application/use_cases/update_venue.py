@@ -6,6 +6,7 @@ import uuid
 
 from apps.venues.domain.entities import VenueEntity
 from apps.venues.domain.repositories import IVenueRepository
+from apps.venues.infrastructure.geocoder import geocode_address
 
 
 class UpdateVenueUseCase:
@@ -28,6 +29,10 @@ class UpdateVenueUseCase:
     ) -> VenueEntity:
         """Patch the venue with any provided fields and persist."""
         venue = self._repo.get_by_id(venue_id)
+
+        # track whether any address component changed so we re-geocode once
+        address_changed = address is not None or city is not None or country is not None
+
         if name is not None:
             venue.name = name
         if address is not None:
@@ -42,5 +47,13 @@ class UpdateVenueUseCase:
             venue.description = description
         if website is not None:
             venue.website = website
+
+        if address_changed:
+            full_address = f"{venue.address}, {venue.city}, {venue.country}"
+            coords = geocode_address(full_address)
+            if coords is not None:
+                venue.latitude = coords[0]
+                venue.longitude = coords[1]
+
         self._repo.update(venue)
         return venue

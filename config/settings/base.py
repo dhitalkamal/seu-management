@@ -135,6 +135,9 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": "/api/v1/",
 }
 
+# Google Maps geocoding - optional, geocoding is skipped when not set
+GOOGLE_MAPS_API_KEY = config("GOOGLE_MAPS_API_KEY", default="")
+
 # MinIO / S3-compatible storage
 MINIO_ENDPOINT = config("MINIO_ENDPOINT", default="http://minio:9000")
 MINIO_ACCESS_KEY = config("MINIO_ACCESS_KEY", default="sansaar")

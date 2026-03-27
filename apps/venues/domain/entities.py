@@ -23,6 +23,9 @@ class VenueEntity:
     description: str = ""
     website: str = ""
     deleted_at: datetime | None = None
+    # populated by geocoder after save; None when API key is absent or geocoding fails
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 @dataclass(slots=True)

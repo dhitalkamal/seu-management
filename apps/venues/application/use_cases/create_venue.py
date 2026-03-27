@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from apps.venues.domain.entities import VenueEntity
 from apps.venues.domain.repositories import IVenueRepository
+from apps.venues.infrastructure.geocoder import geocode_address
 
 
 class CreateVenueUseCase:
@@ -29,6 +30,10 @@ class CreateVenueUseCase:
         website: str = "",
     ) -> VenueEntity:
         """Persist a new venue and return it."""
+        # build the full address string for geocoding
+        full_address = f"{address}, {city}, {country}"
+        coords = geocode_address(full_address)
+
         venue = VenueEntity(
             id=uuid.uuid4(),
             organisation_id=organisation_id,
@@ -41,6 +46,8 @@ class CreateVenueUseCase:
             created_at=datetime.now(timezone.utc),
             description=description,
             website=website,
+            latitude=coords[0] if coords else None,
+            longitude=coords[1] if coords else None,
         )
         self._repo.create(venue)
         return venue

@@ -39,6 +39,8 @@ class DjangoVenueRepository(IVenueRepository):
             description=venue.description,
             website=venue.website,
             deleted_at=venue.deleted_at,
+            latitude=venue.latitude,
+            longitude=venue.longitude,
         )
 
 

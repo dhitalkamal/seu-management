@@ -44,6 +44,8 @@ class VenueResponseSerializer(serializers.Serializer):
     website = serializers.CharField()
     created_by = serializers.UUIDField()
     created_at = serializers.DateTimeField()
+    latitude = serializers.FloatField(allow_null=True)
+    longitude = serializers.FloatField(allow_null=True)
 
 
 class CreateVenueSpaceSerializer(serializers.Serializer):

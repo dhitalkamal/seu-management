@@ -27,6 +27,9 @@ class Venue(models.Model):
     website = models.URLField(blank=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    # coordinates populated server-side via geocoder after save
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
     def to_entity(self) -> VenueEntity:
         """Map this ORM row to a pure-Python VenueEntity."""
@@ -43,6 +46,8 @@ class Venue(models.Model):
             description=self.description,
             website=self.website,
             deleted_at=self.deleted_at,
+            latitude=float(self.latitude) if self.latitude is not None else None,
+            longitude=float(self.longitude) if self.longitude is not None else None,
         )
 
     @classmethod
@@ -60,6 +65,8 @@ class Venue(models.Model):
             description=entity.description,
             website=entity.website,
             deleted_at=entity.deleted_at,
+            latitude=entity.latitude,
+            longitude=entity.longitude,
         )
 
 

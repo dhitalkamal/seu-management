@@ -52,3 +52,23 @@ class DjangoVolunteerApplicationRepository(IVolunteerApplicationRepository):
             .exclude(status="cancelled")
             .exists()
         )
+
+    def get_by_id(self, application_id: uuid.UUID) -> VolunteerApplicationEntity:
+        """Fetch by ID. Raises ApplicationNotFoundError if absent."""
+        try:
+            return VolunteerApplication.objects.get(id=application_id).to_entity()
+        except VolunteerApplication.DoesNotExist:
+            from apps.volunteers.domain.exceptions import ApplicationNotFoundError
+            raise ApplicationNotFoundError("Application not found.")
+
+    def update(self, entity: VolunteerApplicationEntity) -> VolunteerApplicationEntity:
+        """Update mutable fields and return the entity."""
+        VolunteerApplication.objects.filter(id=entity.id).update(status=entity.status)
+        return entity
+
+    def list_by_role(self, role_id: uuid.UUID) -> list[VolunteerApplicationEntity]:
+        """Return all applications for the given role, newest first."""
+        return [
+            obj.to_entity()
+            for obj in VolunteerApplication.objects.filter(volunteer_role_id=role_id).order_by("-created_at")
+        ]

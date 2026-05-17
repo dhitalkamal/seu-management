@@ -24,3 +24,10 @@ class AlreadyAppliedError(DomainError):
 
     http_status = 409
     code = "ERR_VOLUNTEER_ALREADY_APPLIED"
+
+
+class ApplicationNotFoundError(DomainError):
+    """No volunteer application matches the given identifier."""
+
+    http_status = 404
+    code = "ERR_VOLUNTEER_APPLICATION_NOT_FOUND"

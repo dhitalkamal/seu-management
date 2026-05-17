@@ -101,3 +101,20 @@ class FakeVolunteerApplicationRepository(IVolunteerApplicationRepository):
             a.volunteer_role_id == role_id and a.user_id == user_id and a.status != "cancelled"
             for a in self._store.values()
         )
+
+    def get_by_id(self, application_id: uuid.UUID) -> VolunteerApplicationEntity:
+        """Return the application or raise ApplicationNotFoundError."""
+        from apps.volunteers.domain.exceptions import ApplicationNotFoundError
+        entity = self._store.get(application_id)
+        if entity is None:
+            raise ApplicationNotFoundError("Application not found.")
+        return entity
+
+    def update(self, entity: VolunteerApplicationEntity) -> VolunteerApplicationEntity:
+        """Overwrite the stored entity and return it."""
+        self._store[entity.id] = entity
+        return entity
+
+    def list_by_role(self, role_id: uuid.UUID) -> list[VolunteerApplicationEntity]:
+        """Return all applications for the given role."""
+        return [a for a in self._store.values() if a.volunteer_role_id == role_id]

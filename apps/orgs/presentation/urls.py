@@ -6,6 +6,7 @@ from django.urls import URLPattern, path
 
 from .views import (
     OrgApproveView,
+    OrgDeleteView,
     OrgDetailView,
     OrgListCreateView,
     OrgMembersView,
@@ -22,4 +23,5 @@ urlpatterns: list[URLPattern] = [
     path("<uuid:org_id>/reject/", OrgRejectView.as_view(), name="org-reject"),
     path("<uuid:org_id>/suspend/", OrgSuspendView.as_view(), name="org-suspend"),
     path("<uuid:org_id>/reinstate/", OrgReinstateView.as_view(), name="org-reinstate"),
+    path("<uuid:org_id>/delete/", OrgDeleteView.as_view(), name="org-delete"),
 ]

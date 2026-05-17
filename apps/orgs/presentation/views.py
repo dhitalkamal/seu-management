@@ -22,6 +22,7 @@ from apps.orgs.application.use_cases.get_org import GetOrganisationUseCase
 from apps.orgs.application.use_cases.list_orgs import ListOrganisationsUseCase
 from apps.orgs.application.use_cases.reinstate_org import ReinstateOrganisationUseCase
 from apps.orgs.application.use_cases.reject_org import RejectOrganisationUseCase
+from apps.orgs.application.use_cases.soft_delete_org import SoftDeleteOrganisationUseCase
 from apps.orgs.application.use_cases.suspend_org import SuspendOrganisationUseCase
 from apps.orgs.infrastructure.repositories import DjangoOrgMemberRepository, DjangoOrgRepository
 from apps.orgs.presentation.serializers import (
@@ -43,6 +44,7 @@ _APPROVE_UC = ApproveOrganisationUseCase
 _REJECT_UC = RejectOrganisationUseCase
 _SUSPEND_UC = SuspendOrganisationUseCase
 _REINSTATE_UC = ReinstateOrganisationUseCase
+_SOFT_DELETE_UC = SoftDeleteOrganisationUseCase
 _ORG_REPO = DjangoOrgRepository
 _MEMBER_REPO = DjangoOrgMemberRepository
 _CREATE_ORG_SER = CreateOrgSerializer
@@ -348,3 +350,24 @@ class OrgReinstateView(APIView):
         """Transition the organisation from suspended to active."""
         result = _REINSTATE_UC(_ORG_REPO()).execute(org_id=org_id)
         return success_response(_ORG_RESP_SER(result).data, request=request)
+
+
+class OrgDeleteView(APIView):
+    """Soft-delete an organisation (owner only)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Organisations"],
+        summary="Soft-delete organisation",
+        request=None,
+        responses={
+            204: OpenApiResponse(description="Organisation deleted."),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Organisation not found."),
+        },
+    )
+    def delete(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Set deleted_at on the organisation."""
+        _SOFT_DELETE_UC(_ORG_REPO()).execute(org_id=org_id)
+        return Response(status=204)

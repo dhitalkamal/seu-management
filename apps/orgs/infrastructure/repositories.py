@@ -33,6 +33,15 @@ class DjangoOrgRepository(IOrganisationRepository):
         except Organisation.DoesNotExist:
             return None
 
+    def update(self, entity: OrgEntity) -> OrgEntity:
+        """Fetch the existing row, update mutable fields, and save."""
+        obj = Organisation.objects.get(id=entity.id)
+        obj.status = entity.status
+        obj.is_verified = entity.is_verified
+        obj.deleted_at = entity.deleted_at
+        obj.save()
+        return obj.to_entity()
+
     def list_by_user(self, user_id: uuid.UUID) -> list[OrgEntity]:
         """Return all non-deleted orgs where the user has an active membership."""
         org_ids = OrgMember.objects.filter(user_id=user_id, is_active=True).values_list(

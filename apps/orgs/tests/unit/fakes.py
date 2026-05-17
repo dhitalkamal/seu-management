@@ -62,6 +62,11 @@ class FakeOrgRepository(IOrganisationRepository):
                 return o
         return None
 
+    def update(self, entity: OrgEntity) -> OrgEntity:
+        """Overwrite the stored entity and return it."""
+        self._store[entity.id] = entity
+        return entity
+
     def list_by_user(self, user_id: uuid.UUID) -> list[OrgEntity]:
         """Return all non-deleted orgs in the store."""
         return [o for o in self._store.values() if o.deleted_at is None]

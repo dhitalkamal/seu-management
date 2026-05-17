@@ -24,3 +24,10 @@ class MemberAlreadyExistsError(DomainError):
 
     http_status = 409
     code = "ERR_ORG_MEMBER_ALREADY_EXISTS"
+
+
+class InvalidOrgStatusTransitionError(DomainError):
+    """The requested status change is not permitted from the current status."""
+
+    http_status = 422
+    code = "ERR_ORG_INVALID_STATUS_TRANSITION"

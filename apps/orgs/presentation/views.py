@@ -16,9 +16,13 @@ from apps.common.api.pagination import StandardPagination
 from apps.common.api.responses import created_response, error_response, success_response
 from apps.common.health import check_database, check_rabbitmq, check_redis
 from apps.orgs.application.use_cases.add_member import AddOrgMemberUseCase
+from apps.orgs.application.use_cases.approve_org import ApproveOrganisationUseCase
 from apps.orgs.application.use_cases.create_org import CreateOrganisationUseCase
 from apps.orgs.application.use_cases.get_org import GetOrganisationUseCase
 from apps.orgs.application.use_cases.list_orgs import ListOrganisationsUseCase
+from apps.orgs.application.use_cases.reinstate_org import ReinstateOrganisationUseCase
+from apps.orgs.application.use_cases.reject_org import RejectOrganisationUseCase
+from apps.orgs.application.use_cases.suspend_org import SuspendOrganisationUseCase
 from apps.orgs.infrastructure.repositories import DjangoOrgMemberRepository, DjangoOrgRepository
 from apps.orgs.presentation.serializers import (
     AddMemberSerializer,
@@ -35,6 +39,10 @@ _CREATE_ORG_UC = CreateOrganisationUseCase
 _GET_ORG_UC = GetOrganisationUseCase
 _LIST_ORGS_UC = ListOrganisationsUseCase
 _ADD_MEMBER_UC = AddOrgMemberUseCase
+_APPROVE_UC = ApproveOrganisationUseCase
+_REJECT_UC = RejectOrganisationUseCase
+_SUSPEND_UC = SuspendOrganisationUseCase
+_REINSTATE_UC = ReinstateOrganisationUseCase
 _ORG_REPO = DjangoOrgRepository
 _MEMBER_REPO = DjangoOrgMemberRepository
 _CREATE_ORG_SER = CreateOrgSerializer
@@ -252,3 +260,91 @@ class OrgMembersView(APIView):
             role=d["role"],
         )
         return _CREATED(_MEMBER_RESP_SER(result).data, request=request)
+
+
+class OrgApproveView(APIView):
+    """Approve a pending_review organisation (superadmin only)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Organisations"],
+        summary="Approve organisation",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Organisation approved.", response=_ORG_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Organisation not found."),
+            422: OpenApiResponse(description="Invalid status transition."),
+        },
+    )
+    def post(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Transition the organisation from pending_review to active."""
+        result = _APPROVE_UC(_ORG_REPO()).execute(org_id=org_id)
+        return success_response(_ORG_RESP_SER(result).data, request=request)
+
+
+class OrgRejectView(APIView):
+    """Reject a pending_review organisation (superadmin only)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Organisations"],
+        summary="Reject organisation",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Organisation rejected.", response=_ORG_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Organisation not found."),
+            422: OpenApiResponse(description="Invalid status transition."),
+        },
+    )
+    def post(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Transition the organisation from pending_review to suspended."""
+        result = _REJECT_UC(_ORG_REPO()).execute(org_id=org_id)
+        return success_response(_ORG_RESP_SER(result).data, request=request)
+
+
+class OrgSuspendView(APIView):
+    """Suspend an active organisation (superadmin only)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Organisations"],
+        summary="Suspend organisation",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Organisation suspended.", response=_ORG_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Organisation not found."),
+            422: OpenApiResponse(description="Invalid status transition."),
+        },
+    )
+    def post(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Transition the organisation from active to suspended."""
+        result = _SUSPEND_UC(_ORG_REPO()).execute(org_id=org_id)
+        return success_response(_ORG_RESP_SER(result).data, request=request)
+
+
+class OrgReinstateView(APIView):
+    """Reinstate a suspended organisation (superadmin only)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Organisations"],
+        summary="Reinstate organisation",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Organisation reinstated.", response=_ORG_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Organisation not found."),
+            422: OpenApiResponse(description="Invalid status transition."),
+        },
+    )
+    def post(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Transition the organisation from suspended to active."""
+        result = _REINSTATE_UC(_ORG_REPO()).execute(org_id=org_id)
+        return success_response(_ORG_RESP_SER(result).data, request=request)

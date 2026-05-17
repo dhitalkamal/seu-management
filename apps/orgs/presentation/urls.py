@@ -4,10 +4,22 @@ from __future__ import annotations
 
 from django.urls import URLPattern, path
 
-from .views import OrgDetailView, OrgListCreateView, OrgMembersView
+from .views import (
+    OrgApproveView,
+    OrgDetailView,
+    OrgListCreateView,
+    OrgMembersView,
+    OrgReinstateView,
+    OrgRejectView,
+    OrgSuspendView,
+)
 
 urlpatterns: list[URLPattern] = [
     path("", OrgListCreateView.as_view(), name="org-list-create"),
     path("<uuid:org_id>/", OrgDetailView.as_view(), name="org-detail"),
     path("<uuid:org_id>/members/", OrgMembersView.as_view(), name="org-members"),
+    path("<uuid:org_id>/approve/", OrgApproveView.as_view(), name="org-approve"),
+    path("<uuid:org_id>/reject/", OrgRejectView.as_view(), name="org-reject"),
+    path("<uuid:org_id>/suspend/", OrgSuspendView.as_view(), name="org-suspend"),
+    path("<uuid:org_id>/reinstate/", OrgReinstateView.as_view(), name="org-reinstate"),
 ]

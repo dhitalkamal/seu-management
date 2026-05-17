@@ -21,6 +21,9 @@ class IOrganisationRepository(ABC):
     def get_by_slug(self, slug: str) -> OrgEntity | None: ...
 
     @abstractmethod
+    def update(self, entity: OrgEntity) -> OrgEntity: ...
+
+    @abstractmethod
     def list_by_user(self, user_id: uuid.UUID) -> list[OrgEntity]: ...
 
 

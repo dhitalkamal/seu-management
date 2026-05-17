@@ -15,9 +15,9 @@ from apps.orgs.presentation.views import HealthCheckView
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/health/", HealthCheckView.as_view(), name="health"),
-    path("api/v1/organizations/", include("apps.orgs.presentation.urls")),
+    path("api/v1/organisations/", include("apps.orgs.presentation.urls")),
     path("api/v1/venues/", include("apps.venues.presentation.urls")),
-    path("api/v1/volunteer/", include("apps.volunteers.presentation.urls")),
+    path("api/v1/volunteers/", include("apps.volunteers.presentation.urls")),
     path("api/v1/communities/", include("apps.community.presentation.urls")),
     path("api/v1/campaigns/", include("apps.marketing.presentation.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

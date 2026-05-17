@@ -1,4 +1,5 @@
 """Root URL configuration for the management-service."""
+
 from __future__ import annotations
 
 from django.contrib import admin
@@ -20,6 +21,11 @@ urlpatterns = [
     path("api/v1/communities/", include("apps.community.presentation.urls")),
     path("api/v1/campaigns/", include("apps.marketing.presentation.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/schema/swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
-    path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+    # Use relative URL so the browser resolves it through the correct nginx prefix
+    path(
+        "api/schema/swagger/",
+        SpectacularSwaggerView.as_view(url="../?format=json"),
+        name="swagger-ui",
+    ),
+    path("api/schema/redoc/", SpectacularRedocView.as_view(url="../?format=json"), name="redoc"),
 ]

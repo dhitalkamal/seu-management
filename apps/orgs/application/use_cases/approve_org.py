@@ -31,4 +31,5 @@ class ApproveOrganisationUseCase:
                 f"Cannot approve an organisation with status '{org.status}'."
             )
         org.status = "active"
+        org.is_verified = True
         return self._orgs.update(org)

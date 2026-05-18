@@ -12,11 +12,26 @@ from apps.orgs.domain.entities import OrgEntity, OrgMemberEntity
 class Organisation(models.Model):
     """A platform organisation."""
 
+    class OrgType(models.TextChoices):
+        COMPANY = "company", "Company"
+        NGO = "ngo", "NGO"
+        COMMUNITY = "community", "Community"
+        EDUCATIONAL = "educational", "Educational"
+        GOVERNMENT = "government", "Government"
+        INDIVIDUAL = "individual", "Individual"
+
     class Status(models.TextChoices):
         PENDING_REVIEW = "pending_review", "Pending Review"
         APPROVED = "approved", "Approved"
         ACTIVE = "active", "Active"
         SUSPENDED = "suspended", "Suspended"
+
+    class Plan(models.TextChoices):
+        FREE = "free", "Free"
+        STARTER = "starter", "Starter"
+        PRO = "pro", "Pro"
+        NGO = "ngo", "NGO"
+        ENTERPRISE = "enterprise", "Enterprise"
 
     class Meta:
         db_table = '"orgs"."organisation"'
@@ -29,8 +44,20 @@ class Organisation(models.Model):
     contact_email = models.EmailField()
     website = models.URLField(blank=True)
     logo_url = models.URLField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    address = models.CharField(max_length=500, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+    org_type = models.CharField(max_length=30, choices=OrgType.choices, default=OrgType.COMPANY)
+    facebook_url = models.URLField(blank=True)
+    twitter_url = models.URLField(blank=True)
+    instagram_url = models.URLField(blank=True)
+    linkedin_url = models.URLField(blank=True)
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING_REVIEW)
     is_verified = models.BooleanField(default=False)
+    # ! subscription plan — determines platform fee rate and feature limits
+    plan = models.CharField(max_length=20, choices=Plan.choices, default=Plan.FREE)
+    plan_expires_at = models.DateTimeField(null=True, blank=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -50,7 +77,18 @@ class Organisation(models.Model):
             description=self.description,
             website=self.website,
             logo_url=self.logo_url,
+            phone=self.phone,
+            address=self.address,
+            city=self.city,
+            country=self.country,
+            org_type=self.org_type,
+            facebook_url=self.facebook_url,
+            twitter_url=self.twitter_url,
+            instagram_url=self.instagram_url,
+            linkedin_url=self.linkedin_url,
             deleted_at=self.deleted_at,
+            plan=self.plan,
+            plan_expires_at=self.plan_expires_at,
         )
 
     @classmethod
@@ -65,9 +103,20 @@ class Organisation(models.Model):
             description=entity.description,
             website=entity.website,
             logo_url=entity.logo_url,
+            phone=entity.phone,
+            address=entity.address,
+            city=entity.city,
+            country=entity.country,
+            org_type=entity.org_type,
+            facebook_url=entity.facebook_url,
+            twitter_url=entity.twitter_url,
+            instagram_url=entity.instagram_url,
+            linkedin_url=entity.linkedin_url,
             status=entity.status,
             is_verified=entity.is_verified,
             deleted_at=entity.deleted_at,
+            plan=entity.plan,
+            plan_expires_at=entity.plan_expires_at,
         )
 
 
@@ -143,3 +192,27 @@ class AllowedDomain(models.Model):
     match_type = models.CharField(max_length=10, choices=MatchType.choices, default=MatchType.EXACT)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class OrgDocument(models.Model):
+    """A verification document uploaded during org registration."""
+
+    class DocType(models.TextChoices):
+        REGISTRATION_CERT = "registration_cert", "Registration Certificate"
+        PAN_CARD = "pan_card", "PAN Card"
+        TAX_CLEARANCE = "tax_clearance", "Tax Clearance"
+        LOGO = "logo", "Logo"
+        OTHER = "other", "Other"
+
+    class Meta:
+        db_table = '"orgs"."org_document"'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organisation = models.ForeignKey(
+        Organisation, on_delete=models.CASCADE, related_name="documents"
+    )
+    doc_type = models.CharField(max_length=30, choices=DocType.choices)
+    file_url = models.URLField()
+    file_name = models.CharField(max_length=255)
+    file_size = models.PositiveIntegerField(default=0)
+    uploaded_at = models.DateTimeField(auto_now_add=True)

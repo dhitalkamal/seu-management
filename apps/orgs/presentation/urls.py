@@ -8,6 +8,9 @@ from .views import (
     OrgApproveView,
     OrgDeleteView,
     OrgDetailView,
+    OrgDocumentDeleteView,
+    OrgDocumentListCreateView,
+    OrgDocumentUploadView,
     OrgListCreateView,
     OrgMembersView,
     OrgReinstateView,
@@ -24,4 +27,15 @@ urlpatterns: list[URLPattern] = [
     path("<uuid:org_id>/suspend/", OrgSuspendView.as_view(), name="org-suspend"),
     path("<uuid:org_id>/reinstate/", OrgReinstateView.as_view(), name="org-reinstate"),
     path("<uuid:org_id>/delete/", OrgDeleteView.as_view(), name="org-delete"),
+    path("<uuid:org_id>/documents/", OrgDocumentListCreateView.as_view(), name="org-documents"),
+    path(
+        "<uuid:org_id>/documents/<uuid:doc_id>/",
+        OrgDocumentDeleteView.as_view(),
+        name="org-document-delete",
+    ),
+    path(
+        "<uuid:org_id>/documents/upload/",
+        OrgDocumentUploadView.as_view(),
+        name="org-document-upload",
+    ),
 ]

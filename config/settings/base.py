@@ -132,3 +132,10 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": "/api/v1/",
 }
+
+# MinIO / S3-compatible storage
+MINIO_ENDPOINT = config("MINIO_ENDPOINT", default="http://minio:9000")
+MINIO_ACCESS_KEY = config("MINIO_ACCESS_KEY", default="sansaar")
+MINIO_SECRET_KEY = config("MINIO_SECRET_KEY", default="sansaar_secret_12345")
+MINIO_BUCKET = config("MINIO_BUCKET", default="sansaar-docs")
+MINIO_PUBLIC_BASE_URL = config("MINIO_PUBLIC_BASE_URL", default="http://localhost:9000/sansaar-docs")

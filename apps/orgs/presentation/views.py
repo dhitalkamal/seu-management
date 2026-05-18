@@ -24,12 +24,16 @@ from apps.orgs.application.use_cases.reinstate_org import ReinstateOrganisationU
 from apps.orgs.application.use_cases.reject_org import RejectOrganisationUseCase
 from apps.orgs.application.use_cases.soft_delete_org import SoftDeleteOrganisationUseCase
 from apps.orgs.application.use_cases.suspend_org import SuspendOrganisationUseCase
+from apps.orgs.application.use_cases.update_org import UpdateOrganisationUseCase
 from apps.orgs.infrastructure.repositories import DjangoOrgMemberRepository, DjangoOrgRepository
 from apps.orgs.presentation.serializers import (
     AddMemberSerializer,
     CreateOrgSerializer,
+    OrgDocumentResponseSerializer,
     OrgMemberResponseSerializer,
     OrgResponseSerializer,
+    UpdateOrgSerializer,
+    UploadOrgDocumentSerializer,
 )
 
 _IS_AUTH = IsAuthenticated
@@ -49,6 +53,8 @@ _ORG_REPO = DjangoOrgRepository
 _MEMBER_REPO = DjangoOrgMemberRepository
 _CREATE_ORG_SER = CreateOrgSerializer
 _ORG_RESP_SER = OrgResponseSerializer
+_UPDATE_ORG_UC = UpdateOrganisationUseCase
+_UPDATE_ORG_SER = UpdateOrgSerializer
 _ADD_MEMBER_SER = AddMemberSerializer
 _MEMBER_RESP_SER = OrgMemberResponseSerializer
 
@@ -211,12 +217,21 @@ class OrgListCreateView(APIView):
             description=d["description"],
             website=d["website"],
             logo_url=d["logo_url"],
+            phone=d["phone"],
+            address=d["address"],
+            city=d["city"],
+            country=d["country"],
+            org_type=d["org_type"],
+            facebook_url=d["facebook_url"],
+            twitter_url=d["twitter_url"],
+            instagram_url=d["instagram_url"],
+            linkedin_url=d["linkedin_url"],
         )
         return _CREATED(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgDetailView(APIView):
-    """Retrieve a single organisation by id."""
+    """Retrieve or update a single organisation by id."""
 
     permission_classes = [IsAuthenticated]
 
@@ -232,6 +247,23 @@ class OrgDetailView(APIView):
     def get(self, request: Request, org_id: uuid.UUID) -> Response:
         """Return the organisation matching the given id."""
         result = _GET_ORG_UC(_ORG_REPO()).execute(org_id=org_id)
+        return success_response(_ORG_RESP_SER(result).data, request=request)
+
+    @extend_schema(
+        tags=["Organisations"],
+        summary="Update organisation",
+        request=_UPDATE_ORG_SER,
+        responses={
+            200: OpenApiResponse(description="Organisation updated.", response=_ORG_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Organisation not found."),
+        },
+    )
+    def patch(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Partial-update profile fields on an existing organisation."""
+        ser = _UPDATE_ORG_SER(data=request.data)
+        ser.is_valid(raise_exception=True)
+        result = _UPDATE_ORG_UC(_ORG_REPO()).execute(org_id=org_id, **ser.validated_data)
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
@@ -371,3 +403,115 @@ class OrgDeleteView(APIView):
         """Set deleted_at on the organisation."""
         _SOFT_DELETE_UC(_ORG_REPO()).execute(org_id=org_id)
         return Response(status=204)
+
+
+# * organisation document endpoints
+
+
+_DOC_RESP_SER = OrgDocumentResponseSerializer
+_UPLOAD_DOC_SER = UploadOrgDocumentSerializer
+
+
+class OrgDocumentListCreateView(APIView):
+    """List or upload documents for an organisation."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Return all documents belonging to the given organisation."""
+        from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
+
+        docs = OrgDocModel.objects.filter(organisation_id=org_id).order_by("-uploaded_at")
+        return success_response(_DOC_RESP_SER(docs, many=True).data, request=request)
+
+    def post(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Upload a new document for the given organisation."""
+        from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
+
+        ser = _UPLOAD_DOC_SER(data=request.data)
+        ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        doc = OrgDocModel.objects.create(
+            organisation_id=org_id,
+            doc_type=d["doc_type"],
+            file_url=d["file_url"],
+            file_name=d["file_name"],
+            file_size=d.get("file_size", 0),
+        )
+        return _CREATED(_DOC_RESP_SER(doc).data, request=request)
+
+
+class OrgDocumentDeleteView(APIView):
+    """Delete a single document from an organisation."""
+
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request: Request, org_id: uuid.UUID, doc_id: uuid.UUID) -> Response:
+        """Remove the specified document."""
+        from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
+
+        OrgDocModel.objects.filter(id=doc_id, organisation_id=org_id).delete()
+        return Response(status=204)
+
+
+class OrgDocumentUploadView(APIView):
+    """POST /organisations/<org_id>/documents/upload/ - upload a real file to MinIO."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Org Documents"],
+        summary="Upload a verification document to MinIO",
+        description="Accepts a multipart file, stores it in MinIO, and saves the document record.",
+        responses={201: OpenApiResponse(description="Document uploaded and saved.")},
+    )
+    def post(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Upload file to MinIO and save the document record for the organisation."""
+        from apps.common.storage import upload_file
+        from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
+
+        file_obj = request.FILES.get("file")
+        doc_type = request.data.get("doc_type", "other")
+
+        if not file_obj:
+            return error_response(
+                code="ERR_NO_FILE",
+                message="file is required.",
+                http_status=422,
+                request=request,
+            )
+
+        try:
+            file_url = upload_file(
+                file_obj,
+                file_obj.name,
+                file_obj.content_type or "application/octet-stream",
+            )
+        except Exception as exc:
+            return error_response(
+                code="ERR_UPLOAD_FAILED",
+                message=f"File upload failed: {exc}",
+                http_status=500,
+                request=request,
+            )
+
+        doc = OrgDocModel.objects.create(
+            organisation_id=org_id,
+            doc_type=doc_type,
+            file_url=file_url,
+            file_name=file_obj.name,
+            file_size=file_obj.size,
+        )
+
+        return created_response(
+            {
+                "id": str(doc.id),
+                "org_id": str(doc.organisation_id),
+                "doc_type": doc.doc_type,
+                "file_url": doc.file_url,
+                "file_name": doc.file_name,
+                "file_size": doc.file_size,
+                "uploaded_at": doc.uploaded_at.isoformat(),
+            },
+            request=request,
+        )

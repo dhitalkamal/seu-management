@@ -14,6 +14,7 @@ dependencies = [
     "redis",
     "pika",
     "drf-spectacular",
+    "boto3>=1.34",
 ]
 
 [dependency-groups]
@@ -30,7 +31,8 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [tool.ruff]
-line-length = 100
+exclude = ["*/migrations/*"]
+line-length = 140
 target-version = "py313"
 
 [tool.ruff.lint]

@@ -23,7 +23,19 @@ class OrgEntity:
     description: str = ""
     website: str = ""
     logo_url: str = ""
+    phone: str = ""
+    address: str = ""
+    city: str = ""
+    country: str = ""
+    org_type: str = "company"
+    facebook_url: str = ""
+    twitter_url: str = ""
+    instagram_url: str = ""
+    linkedin_url: str = ""
     deleted_at: datetime | None = None
+    # ! subscription plan — determines platform fee and feature limits
+    plan: str = "free"
+    plan_expires_at: datetime | None = None
 
 
 @dataclass(slots=True)

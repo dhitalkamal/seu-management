@@ -13,9 +13,7 @@ from apps.volunteers.application.use_cases.reject_application import RejectAppli
 from apps.volunteers.domain.exceptions import ApplicationNotFoundError
 from apps.volunteers.tests.unit.fakes import (
     FakeVolunteerApplicationRepository,
-    FakeVolunteerRoleRepository,
     make_application,
-    make_role,
 )
 
 

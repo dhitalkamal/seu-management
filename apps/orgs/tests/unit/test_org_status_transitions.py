@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 
 from apps.orgs.application.use_cases.approve_org import ApproveOrganisationUseCase
-from apps.orgs.application.use_cases.reject_org import RejectOrganisationUseCase
 from apps.orgs.application.use_cases.reinstate_org import ReinstateOrganisationUseCase
+from apps.orgs.application.use_cases.reject_org import RejectOrganisationUseCase
 from apps.orgs.application.use_cases.suspend_org import SuspendOrganisationUseCase
 from apps.orgs.domain.exceptions import InvalidOrgStatusTransitionError, OrgNotFoundError
 from apps.orgs.tests.unit.fakes import FakeOrgRepository, make_org

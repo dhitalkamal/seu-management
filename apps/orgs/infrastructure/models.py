@@ -117,3 +117,29 @@ class OrgMember(models.Model):
             role=entity.role,
             is_active=entity.is_active,
         )
+
+
+class AllowedDomain(models.Model):
+    """Whitelisted email domain for an organisation's private events."""
+
+    class MatchType(models.TextChoices):
+        EXACT = "exact", "Exact match (e.g. company.com)"
+        WILDCARD = "wildcard", "Wildcard (e.g. *.company.com)"
+
+    class Meta:
+        db_table = '"orgs"."allowed_domain"'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organisation", "domain"],
+                name="unique_org_allowed_domain",
+            )
+        ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organisation = models.ForeignKey(
+        Organisation, on_delete=models.CASCADE, related_name="allowed_domains"
+    )
+    domain = models.CharField(max_length=253)
+    match_type = models.CharField(max_length=10, choices=MatchType.choices, default=MatchType.EXACT)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)

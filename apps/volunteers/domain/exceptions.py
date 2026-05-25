@@ -31,3 +31,66 @@ class ApplicationNotFoundError(DomainError):
 
     http_status = 404
     code = "ERR_VOLUNTEER_APPLICATION_NOT_FOUND"
+
+
+class InvalidStatusTransitionError(DomainError):
+    """The requested status change is not allowed from the current status."""
+
+    http_status = 422
+    code = "ERR_VOLUNTEER_INVALID_STATUS_TRANSITION"
+
+
+class AlreadyCheckedInError(DomainError):
+    """The volunteer has already checked in to this event."""
+
+    http_status = 409
+    code = "ERR_VOLUNTEER_ALREADY_CHECKED_IN"
+
+
+class NotCheckedInError(DomainError):
+    """Check-out attempted before check-in, or check-in data is missing."""
+
+    http_status = 422
+    code = "ERR_VOLUNTEER_NOT_CHECKED_IN"
+
+
+class ApplicationNotRatableError(DomainError):
+    """Application cannot be rated because attendance timestamps are incomplete."""
+
+    http_status = 422
+    code = "ERR_VOLUNTEER_APPLICATION_NOT_RATABLE"
+
+
+class InvalidRatingError(DomainError):
+    """Rating value is outside the allowed 1-5 range."""
+
+    http_status = 422
+    code = "ERR_VOLUNTEER_INVALID_RATING"
+
+
+class CertificateNotEligibleError(DomainError):
+    """Application does not meet the requirements for certificate generation."""
+
+    http_status = 422
+    code = "ERR_VOLUNTEER_CERTIFICATE_NOT_ELIGIBLE"
+
+
+class CertificateAlreadyIssuedError(DomainError):
+    """A certificate has already been issued for this application."""
+
+    http_status = 409
+    code = "ERR_VOLUNTEER_CERTIFICATE_ALREADY_ISSUED"
+
+
+class CertificateNotFoundError(DomainError):
+    """No certificate matches the given identifier."""
+
+    http_status = 404
+    code = "ERR_VOLUNTEER_CERTIFICATE_NOT_FOUND"
+
+
+class ShiftNotFoundError(DomainError):
+    """No volunteer shift matches the given identifier."""
+
+    http_status = 404
+    code = "ERR_VOLUNTEER_SHIFT_NOT_FOUND"

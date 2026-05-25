@@ -37,3 +37,33 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["apps.*.infrastructure.models", "apps.*.infrastructure.support_models"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["apps.*.migrations.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["apps.common.*", "config.settings.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "apps.orgs.application.use_cases.update_ticket_status",
+    "apps.orgs.application.use_cases.list_tickets",
+    "apps.orgs.application.use_cases.create_ticket",
+    "apps.orgs.management.commands.consume_events",
+    "apps.orgs.presentation.views",
+    "apps.orgs.presentation.support_views",
+    "apps.venues.presentation.views",
+    "apps.marketing.presentation.views",
+    "apps.community.presentation.views",
+]
+ignore_errors = true

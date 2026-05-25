@@ -5,7 +5,9 @@ from __future__ import annotations
 from django.urls import URLPattern, path
 
 from .views import (
+    GenerateCertificateView,
     RateVolunteerView,
+    VerifyCertificateView,
     VolunteerApplicationApproveView,
     VolunteerApplicationCancelView,
     VolunteerApplicationListView,
@@ -53,5 +55,15 @@ urlpatterns: list[URLPattern] = [
         "applications/<uuid:application_id>/rate/",
         RateVolunteerView.as_view(),
         name="volunteer-application-rate",
+    ),
+    path(
+        "applications/<uuid:application_id>/certificate/",
+        GenerateCertificateView.as_view(),
+        name="volunteer-certificate-generate",
+    ),
+    path(
+        "certificates/<uuid:certificate_id>/verify/",
+        VerifyCertificateView.as_view(),
+        name="volunteer-certificate-verify",
     ),
 ]

@@ -73,3 +73,24 @@ class InvalidRatingError(DomainError):
 
     http_status = 422
     code = "ERR_VOLUNTEER_INVALID_RATING"
+
+
+class CertificateNotEligibleError(DomainError):
+    """Application does not meet the criteria for certificate generation (needs check-in, check-out, and a rating)."""
+
+    http_status = 409
+    code = "ERR_VOLUNTEER_CERTIFICATE_NOT_ELIGIBLE"
+
+
+class CertificateAlreadyIssuedError(DomainError):
+    """A certificate has already been issued for this application."""
+
+    http_status = 409
+    code = "ERR_VOLUNTEER_CERTIFICATE_ALREADY_ISSUED"
+
+
+class CertificateNotFoundError(DomainError):
+    """No certificate matches the given identifier."""
+
+    http_status = 404
+    code = "ERR_VOLUNTEER_CERTIFICATE_NOT_FOUND"

@@ -6,7 +6,7 @@ import uuid
 
 from django.db import models
 
-from apps.volunteers.domain.entities import VolunteerApplicationEntity, VolunteerRoleEntity
+from apps.volunteers.domain.entities import CertificateEntity, VolunteerApplicationEntity, VolunteerRoleEntity
 
 
 class VolunteerRole(models.Model):
@@ -114,4 +114,59 @@ class VolunteerApplication(models.Model):
             rating=entity.rating,
             feedback=entity.feedback,
             certificate_issued=entity.certificate_issued,
+        )
+
+
+class Certificate(models.Model):
+    """A generated PDF certificate for a completed volunteer application."""
+
+    class Meta:
+        db_table = '"volunteers"."certificate"'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    application_id = models.UUIDField(unique=True)
+    volunteer_id = models.UUIDField()
+    event_id = models.UUIDField()
+    org_id = models.UUIDField(null=True, blank=True)
+    volunteer_name = models.CharField(max_length=255)
+    event_name = models.CharField(max_length=255)
+    role_name = models.CharField(max_length=255)
+    pdf_url = models.TextField()
+    issued_at = models.DateTimeField()
+    hours_worked = models.FloatField(null=True, blank=True)
+    rating = models.SmallIntegerField(null=True, blank=True)
+
+    def to_entity(self) -> CertificateEntity:
+        """Map this ORM row to a pure-Python CertificateEntity."""
+        return CertificateEntity(
+            id=self.id,
+            application_id=self.application_id,
+            volunteer_id=self.volunteer_id,
+            event_id=self.event_id,
+            org_id=self.org_id,
+            volunteer_name=self.volunteer_name,
+            event_name=self.event_name,
+            role_name=self.role_name,
+            pdf_url=self.pdf_url,
+            issued_at=self.issued_at,
+            hours_worked=self.hours_worked,
+            rating=self.rating,
+        )
+
+    @classmethod
+    def from_entity(cls, entity: CertificateEntity) -> "Certificate":
+        """Build an unsaved ORM instance from a CertificateEntity."""
+        return cls(
+            id=entity.id,
+            application_id=entity.application_id,
+            volunteer_id=entity.volunteer_id,
+            event_id=entity.event_id,
+            org_id=entity.org_id,
+            volunteer_name=entity.volunteer_name,
+            event_name=entity.event_name,
+            role_name=entity.role_name,
+            pdf_url=entity.pdf_url,
+            issued_at=entity.issued_at,
+            hours_worked=entity.hours_worked,
+            rating=entity.rating,
         )

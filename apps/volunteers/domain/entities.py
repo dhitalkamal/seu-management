@@ -45,3 +45,21 @@ class VolunteerApplicationEntity:
             return None
         delta = self.check_out_at - self.check_in_at
         return round(delta.total_seconds() / 3600, 2)
+
+
+@dataclass(slots=True)
+class CertificateEntity:
+    """A generated volunteer participation certificate with a unique QR-verified ID."""
+
+    id: uuid.UUID
+    application_id: uuid.UUID
+    volunteer_id: uuid.UUID
+    event_id: uuid.UUID
+    volunteer_name: str
+    event_name: str
+    role_name: str
+    pdf_url: str
+    issued_at: datetime
+    org_id: uuid.UUID | None = None
+    hours_worked: float | None = None
+    rating: int | None = None

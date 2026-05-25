@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import uuid
 
-from apps.volunteers.domain.entities import VolunteerApplicationEntity, VolunteerRoleEntity
+from apps.volunteers.domain.entities import CertificateEntity, VolunteerApplicationEntity, VolunteerRoleEntity
 from apps.volunteers.domain.exceptions import RoleNotFoundError
 from apps.volunteers.domain.repositories import (
+    ICertificateRepository,
     IVolunteerApplicationRepository,
     IVolunteerRoleRepository,
 )
-from apps.volunteers.infrastructure.models import VolunteerApplication, VolunteerRole
+from apps.volunteers.infrastructure.models import Certificate, VolunteerApplication, VolunteerRole
 
 
 class DjangoVolunteerRoleRepository(IVolunteerRoleRepository):
@@ -64,9 +65,29 @@ class DjangoVolunteerApplicationRepository(IVolunteerApplicationRepository):
             check_out_at=entity.check_out_at,
             rating=entity.rating,
             feedback=entity.feedback,
+            certificate_issued=entity.certificate_issued,
         )
         return entity
 
     def list_by_role(self, role_id: uuid.UUID) -> list[VolunteerApplicationEntity]:
         """Return all applications for the given role, newest first."""
         return [obj.to_entity() for obj in VolunteerApplication.objects.filter(volunteer_role_id=role_id).order_by("-created_at")]
+
+
+class DjangoCertificateRepository(ICertificateRepository):
+    """Persists Certificate entities using the Django ORM."""
+
+    def create(self, entity: CertificateEntity) -> CertificateEntity:
+        """Persist a new certificate and return the saved entity."""
+        obj = Certificate.from_entity(entity)
+        obj.save(using="default")
+        return obj.to_entity()
+
+    def get_by_id(self, certificate_id: uuid.UUID) -> CertificateEntity:
+        """Fetch by ID. Raises CertificateNotFoundError if absent."""
+        try:
+            return Certificate.objects.get(id=certificate_id).to_entity()
+        except Certificate.DoesNotExist:
+            from apps.volunteers.domain.exceptions import CertificateNotFoundError
+
+            raise CertificateNotFoundError("Certificate not found.")

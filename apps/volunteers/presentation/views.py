@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 
+from django.conf import settings
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -17,16 +18,24 @@ from apps.volunteers.application.use_cases.cancel_application import CancelAppli
 from apps.volunteers.application.use_cases.checkin_volunteer import CheckInVolunteerUseCase
 from apps.volunteers.application.use_cases.checkout_volunteer import CheckOutVolunteerUseCase
 from apps.volunteers.application.use_cases.create_role import CreateVolunteerRoleUseCase
+from apps.volunteers.application.use_cases.generate_certificate import GenerateCertificateUseCase
 from apps.volunteers.application.use_cases.list_applications import ListApplicationsUseCase
 from apps.volunteers.application.use_cases.rate_volunteer import RateVolunteerUseCase
 from apps.volunteers.application.use_cases.reject_application import RejectApplicationUseCase
+from apps.volunteers.application.use_cases.verify_certificate import VerifyCertificateUseCase
+from apps.volunteers.infrastructure.participation_client import HttpParticipationContextClient
+from apps.volunteers.infrastructure.pdf import ReportlabCertificatePdfGenerator
 from apps.volunteers.infrastructure.repositories import (
+    DjangoCertificateRepository,
     DjangoVolunteerApplicationRepository,
     DjangoVolunteerRoleRepository,
 )
+from apps.volunteers.infrastructure.storage import S3CertificateStorage
 from apps.volunteers.presentation.serializers import (
     ApplySerializer,
+    CertificateResponseSerializer,
     CreateRoleSerializer,
+    GenerateCertificateSerializer,
     RateVolunteerSerializer,
     VolunteerApplicationResponseSerializer,
     VolunteerRoleResponseSerializer,
@@ -44,13 +53,20 @@ _LIST_APPS_UC = ListApplicationsUseCase
 _CHECKIN_UC = CheckInVolunteerUseCase
 _CHECKOUT_UC = CheckOutVolunteerUseCase
 _RATE_UC = RateVolunteerUseCase
+_GEN_CERT_UC = GenerateCertificateUseCase
+_VERIFY_CERT_UC = VerifyCertificateUseCase
 _ROLE_REPO = DjangoVolunteerRoleRepository
 _APP_REPO = DjangoVolunteerApplicationRepository
+_CERT_REPO = DjangoCertificateRepository
+_CONTEXT_CLIENT = HttpParticipationContextClient
+_PDF_GEN = ReportlabCertificatePdfGenerator
 _CREATE_ROLE_SER = CreateRoleSerializer
 _APPLY_SER = ApplySerializer
 _RATE_SER = RateVolunteerSerializer
+_GEN_CERT_SER = GenerateCertificateSerializer
 _ROLE_RESP_SER = VolunteerRoleResponseSerializer
 _APP_RESP_SER = VolunteerApplicationResponseSerializer
+_CERT_RESP_SER = CertificateResponseSerializer
 
 
 class VolunteerRoleView(APIView):
@@ -102,7 +118,11 @@ class VolunteerRoleApplyView(APIView):
         """Submit a pending application for the authenticated user."""
         ser = _APPLY_SER(data=request.data)
         ser.is_valid(raise_exception=True)
-        result = _APPLY_UC(_ROLE_REPO(), _APP_REPO()).execute(
+        result = _APPLY_UC(
+            _ROLE_REPO(),
+            _APP_REPO(),
+            context_client=_CONTEXT_CLIENT(settings.PARTICIPATION_SERVICE_URL),
+        ).execute(
             role_id=role_id,
             user_id=_UUID(str(request.user.id)),
             event_id=ser.validated_data["event_id"],
@@ -146,7 +166,10 @@ class VolunteerApplicationApproveView(APIView):
     )
     def post(self, request: Request, application_id: uuid.UUID) -> Response:
         """Set application status to approved."""
-        result = _APPROVE_UC(_APP_REPO()).execute(application_id=application_id)
+        result = _APPROVE_UC(
+            _APP_REPO(),
+            context_client=_CONTEXT_CLIENT(settings.PARTICIPATION_SERVICE_URL),
+        ).execute(application_id=application_id)
         return success_response(_APP_RESP_SER(result).data, request=request)
 
 
@@ -267,3 +290,64 @@ class RateVolunteerView(APIView):
         )
         app = _APP_REPO().get_by_id(application_id)
         return success_response(_APP_RESP_SER(app).data, request=request)
+
+
+class GenerateCertificateView(APIView):
+    """Generate a QR-verified PDF certificate for a completed volunteer application."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Volunteers"],
+        summary="Generate volunteer certificate",
+        request=_GEN_CERT_SER,
+        responses={
+            201: OpenApiResponse(description="Certificate generated.", response=_CERT_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Application not found."),
+            409: OpenApiResponse(description="Not eligible or already issued."),
+        },
+    )
+    def post(self, request: Request, application_id: uuid.UUID) -> Response:
+        """Generate and store the certificate PDF for the application."""
+        ser = _GEN_CERT_SER(data=request.data)
+        ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        storage = S3CertificateStorage(
+            bucket=settings.MINIO_BUCKET,
+            base_url=settings.MINIO_PUBLIC_BASE_URL,
+        )
+        result = _GEN_CERT_UC(
+            app_repo=_APP_REPO(),
+            cert_repo=_CERT_REPO(),
+            pdf_generator=_PDF_GEN(),
+            storage=storage,
+        ).execute(
+            application_id=application_id,
+            volunteer_name=d["volunteer_name"],
+            event_name=d["event_name"],
+            role_name=d["role_name"],
+            org_id=d["org_id"],
+        )
+        return _CREATED(_CERT_RESP_SER(result).data, request=request)
+
+
+class VerifyCertificateView(APIView):
+    """Public certificate verification endpoint - no authentication required."""
+
+    permission_classes = []
+    authentication_classes = []
+
+    @extend_schema(
+        tags=["Volunteers"],
+        summary="Verify volunteer certificate",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Certificate details.", response=_CERT_RESP_SER),
+            404: OpenApiResponse(description="Certificate not found."),
+        },
+    )
+    def get(self, request: Request, certificate_id: uuid.UUID) -> Response:
+        """Return the certificate record for QR code verification."""
+        result = _VERIFY_CERT_UC(cert_repo=_CERT_REPO()).execute(certificate_id=certificate_id)
+        return success_response(_CERT_RESP_SER(result).data, request=request)

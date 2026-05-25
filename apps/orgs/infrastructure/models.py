@@ -185,9 +185,7 @@ class AllowedDomain(models.Model):
         ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organisation = models.ForeignKey(
-        Organisation, on_delete=models.CASCADE, related_name="allowed_domains"
-    )
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name="allowed_domains")
     domain = models.CharField(max_length=253)
     match_type = models.CharField(max_length=10, choices=MatchType.choices, default=MatchType.EXACT)
     is_active = models.BooleanField(default=True)
@@ -208,9 +206,7 @@ class OrgDocument(models.Model):
         db_table = '"orgs"."org_document"'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organisation = models.ForeignKey(
-        Organisation, on_delete=models.CASCADE, related_name="documents"
-    )
+    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name="documents")
     doc_type = models.CharField(max_length=30, choices=DocType.choices)
     file_url = models.URLField()
     file_name = models.CharField(max_length=255)

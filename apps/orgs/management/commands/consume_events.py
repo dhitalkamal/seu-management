@@ -95,12 +95,8 @@ class Command(BaseCommand):
             channel.exchange_declare(exchange="sansaar", exchange_type="topic", durable=True)
             channel.queue_declare(queue="management.events", durable=True)
             # * bind to management events and subscription events from payment service
-            channel.queue_bind(
-                queue="management.events", exchange="sansaar", routing_key="management.#"
-            )
-            channel.queue_bind(
-                queue="management.events", exchange="sansaar", routing_key="subscription.#"
-            )
+            channel.queue_bind(queue="management.events", exchange="sansaar", routing_key="management.#")
+            channel.queue_bind(queue="management.events", exchange="sansaar", routing_key="subscription.#")
             channel.basic_qos(prefetch_count=1)
             channel.basic_consume(
                 queue="management.events",

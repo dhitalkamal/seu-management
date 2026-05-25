@@ -71,9 +71,7 @@ class CommunityMember(models.Model):
 
     class Meta:
         db_table = '"community"."community_member"'
-        constraints = [
-            models.UniqueConstraint(fields=["community", "user_id"], name="unique_community_member")
-        ]
+        constraints = [models.UniqueConstraint(fields=["community", "user_id"], name="unique_community_member")]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="members")

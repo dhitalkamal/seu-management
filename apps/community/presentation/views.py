@@ -62,9 +62,7 @@ class CommunityListCreateView(APIView):
     def get(self, request: Request) -> Response:
         """Return all active communities."""
         communities = _LIST_UC(_REPO()).execute()
-        return success_response(
-            CommunityResponseSerializer(communities, many=True).data, request=request
-        )
+        return success_response(CommunityResponseSerializer(communities, many=True).data, request=request)
 
     @extend_schema(
         tags=["Community"],
@@ -188,9 +186,7 @@ class CommunityPostListCreateView(APIView):
                 http_status=404,
                 request=request,
             )
-        return success_response(
-            CommunityPostResponseSerializer(posts, many=True).data, request=request
-        )
+        return success_response(CommunityPostResponseSerializer(posts, many=True).data, request=request)
 
     @extend_schema(
         tags=["Community"],

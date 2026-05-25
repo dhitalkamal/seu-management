@@ -15,10 +15,7 @@ class DjangoVenueRepository(IVenueRepository):
 
     def list_by_org(self, organisation_id: uuid.UUID) -> list[VenueEntity]:
         """Return all non-deleted venues for an organisation."""
-        return [
-            v.to_entity()
-            for v in Venue.objects.filter(organisation_id=organisation_id, deleted_at__isnull=True)
-        ]
+        return [v.to_entity() for v in Venue.objects.filter(organisation_id=organisation_id, deleted_at__isnull=True)]
 
     def get_by_id(self, venue_id: uuid.UUID) -> VenueEntity:
         """Raise VenueNotFoundError if the venue is not found."""

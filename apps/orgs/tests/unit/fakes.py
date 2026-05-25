@@ -85,7 +85,4 @@ class FakeOrgMemberRepository(IOrgMemberRepository):
 
     def exists(self, org_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """True if an active membership exists for this (org, user) pair."""
-        return any(
-            m.organisation_id == org_id and m.user_id == user_id and m.is_active
-            for m in self._store.values()
-        )
+        return any(m.organisation_id == org_id and m.user_id == user_id and m.is_active for m in self._store.values())

@@ -16,9 +16,7 @@ class AddVenueSpaceUseCase:
         self._repo = repo
         self._spaces = space_repo
 
-    def execute(
-        self, *, venue_id: uuid.UUID, name: str, capacity: int, floor: str = ""
-    ) -> VenueSpaceEntity:
+    def execute(self, *, venue_id: uuid.UUID, name: str, capacity: int, floor: str = "") -> VenueSpaceEntity:
         """Validate the venue exists, then persist the new space."""
         self._repo.get_by_id(venue_id)
         space = VenueSpaceEntity(

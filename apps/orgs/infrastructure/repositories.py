@@ -63,15 +63,8 @@ class DjangoOrgRepository(IOrganisationRepository):
 
     def list_by_user(self, user_id: uuid.UUID) -> list[OrgEntity]:
         """Return all non-deleted orgs where the user has an active membership."""
-        org_ids = OrgMember.objects.filter(user_id=user_id, is_active=True).values_list(
-            "organisation_id", flat=True
-        )
-        return [
-            obj.to_entity()
-            for obj in Organisation.objects.filter(
-                id__in=org_ids, deleted_at__isnull=True
-            ).order_by("-created_at")
-        ]
+        org_ids = OrgMember.objects.filter(user_id=user_id, is_active=True).values_list("organisation_id", flat=True)
+        return [obj.to_entity() for obj in Organisation.objects.filter(id__in=org_ids, deleted_at__isnull=True).order_by("-created_at")]
 
 
 class DjangoOrgMemberRepository(IOrgMemberRepository):
@@ -85,9 +78,7 @@ class DjangoOrgMemberRepository(IOrgMemberRepository):
 
     def exists(self, org_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """True if an active membership exists for this (org, user) pair."""
-        return OrgMember.objects.filter(
-            organisation_id=org_id, user_id=user_id, is_active=True
-        ).exists()
+        return OrgMember.objects.filter(organisation_id=org_id, user_id=user_id, is_active=True).exists()
 
 
 class DjangoOrgDocumentRepository:

@@ -27,9 +27,7 @@ class ApproveOrganisationUseCase:
         """
         org = self._orgs.get_by_id(org_id)
         if org.status not in _ALLOWED_FROM:
-            raise InvalidOrgStatusTransitionError(
-                f"Cannot approve an organisation with status '{org.status}'."
-            )
+            raise InvalidOrgStatusTransitionError(f"Cannot approve an organisation with status '{org.status}'.")
         org.status = "active"
         org.is_verified = True
         return self._orgs.update(org)

@@ -93,9 +93,7 @@ class FakeCommunityMemberRepository(ICommunityMemberRepository):
     def __init__(self) -> None:
         self._store: dict[tuple[uuid.UUID, uuid.UUID], CommunityMemberEntity] = {}
 
-    def get_membership(
-        self, community_id: uuid.UUID, user_id: uuid.UUID
-    ) -> CommunityMemberEntity | None:
+    def get_membership(self, community_id: uuid.UUID, user_id: uuid.UUID) -> CommunityMemberEntity | None:
         """Return membership or None."""
         return self._store.get((community_id, user_id))
 
@@ -116,11 +114,7 @@ class FakeCommunityPostRepository(ICommunityPostRepository):
 
     def list_by_community(self, community_id: uuid.UUID) -> list[CommunityPostEntity]:
         """Return published posts for a community."""
-        return [
-            p
-            for p in self._store.values()
-            if p.community_id == community_id and p.status == "published"
-        ]
+        return [p for p in self._store.values() if p.community_id == community_id and p.status == "published"]
 
     def get_by_id(self, post_id: uuid.UUID) -> CommunityPostEntity:
         """Raise CommunityPostNotFoundError if not found."""

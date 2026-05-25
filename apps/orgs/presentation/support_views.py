@@ -167,24 +167,28 @@ class OrgAnalyticsView(APIView):
         org_monthly_series = []
         for i in range(11, -1, -1):
             from datetime import timedelta as td
+
             dt = now.replace(day=1) - td(days=30 * i)
             key = dt.strftime("%Y-%m")
             org_monthly_series.append(month_map.get(key, 0))
 
-        return success_response({
-            "orgs": {
-                "total": total,
-                "active": active,
-                "pending": pending,
-                "suspended": suspended,
-                "verified": verified,
-                "new_30d": new_30d,
-                "prev_30d": prev_30d,
-                "plan_breakdown": plan_breakdown,
-                "monthly_series": org_monthly_series,
+        return success_response(
+            {
+                "orgs": {
+                    "total": total,
+                    "active": active,
+                    "pending": pending,
+                    "suspended": suspended,
+                    "verified": verified,
+                    "new_30d": new_30d,
+                    "prev_30d": prev_30d,
+                    "plan_breakdown": plan_breakdown,
+                    "monthly_series": org_monthly_series,
+                },
+                "tickets": {
+                    "open": open_tickets,
+                    "escalated": escalated_tickets,
+                },
             },
-            "tickets": {
-                "open": open_tickets,
-                "escalated": escalated_tickets,
-            },
-        }, request=request)
+            request=request,
+        )

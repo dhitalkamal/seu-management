@@ -31,6 +31,7 @@ def test_approve_wrong_status_raises():
 def test_approve_missing_org_raises():
     """Approving a non-existent org raises OrgNotFoundError."""
     import uuid
+
     repo = FakeOrgRepository()
     with pytest.raises(OrgNotFoundError):
         ApproveOrganisationUseCase(repo).execute(org_id=uuid.uuid4())

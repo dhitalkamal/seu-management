@@ -59,9 +59,7 @@ class Campaign(models.Model):
     subject = models.CharField(max_length=500)
     body = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
-    segment = models.ForeignKey(
-        AudienceSegment, null=True, blank=True, on_delete=models.SET_NULL, related_name="campaigns"
-    )
+    segment = models.ForeignKey(AudienceSegment, null=True, blank=True, on_delete=models.SET_NULL, related_name="campaigns")
     sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

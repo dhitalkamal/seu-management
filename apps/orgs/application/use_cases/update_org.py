@@ -36,9 +36,20 @@ class UpdateOrganisationUseCase:
 
         # ! only allow profile fields — never status, plan, or is_verified here
         allowed = {
-            "name", "description", "contact_email", "website", "logo_url",
-            "phone", "address", "city", "country", "org_type",
-            "facebook_url", "twitter_url", "instagram_url", "linkedin_url",
+            "name",
+            "description",
+            "contact_email",
+            "website",
+            "logo_url",
+            "phone",
+            "address",
+            "city",
+            "country",
+            "org_type",
+            "facebook_url",
+            "twitter_url",
+            "instagram_url",
+            "linkedin_url",
         }
 
         # ! critical fields — changing these on an active org resets verification

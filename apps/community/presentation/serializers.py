@@ -33,9 +33,7 @@ class CreatePostSerializer(serializers.Serializer):
     """Request body for creating a community post."""
 
     content = serializers.CharField()
-    post_type = serializers.ChoiceField(
-        choices=["text", "image", "video", "link", "poll"], default="text"
-    )
+    post_type = serializers.ChoiceField(choices=["text", "image", "video", "link", "poll"], default="text")
     media_urls = serializers.ListField(child=serializers.CharField(), required=False, default=list)
 
 

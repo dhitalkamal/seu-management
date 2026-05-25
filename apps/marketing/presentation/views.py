@@ -51,9 +51,7 @@ class CampaignListCreateView(APIView):
     def get(self, request: Request) -> Response:
         """Return all campaigns."""
         campaigns = _LIST_CAMPAIGNS_UC(_CAMPAIGN_REPO()).execute()
-        return success_response(
-            CampaignResponseSerializer(campaigns, many=True).data, request=request
-        )
+        return success_response(CampaignResponseSerializer(campaigns, many=True).data, request=request)
 
     @extend_schema(
         tags=["Marketing"],
@@ -124,9 +122,7 @@ class SegmentListCreateView(APIView):
     def get(self, request: Request) -> Response:
         """Return all audience segments."""
         segments = _LIST_SEGMENTS_UC(_SEGMENT_REPO()).execute()
-        return success_response(
-            SegmentResponseSerializer(segments, many=True).data, request=request
-        )
+        return success_response(SegmentResponseSerializer(segments, many=True).data, request=request)
 
     @extend_schema(
         tags=["Marketing"],

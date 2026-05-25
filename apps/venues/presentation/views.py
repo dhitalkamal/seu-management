@@ -118,9 +118,7 @@ class VenueDetailView(APIView):
         try:
             venue = _GET_UC(_REPO()).execute(venue_id=venue_id)
         except VenueNotFoundError as exc:
-            return error_response(
-                code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request
-            )
+            return error_response(code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request)
         return success_response(VenueResponseSerializer(venue).data, request=request)
 
     @extend_schema(
@@ -140,9 +138,7 @@ class VenueDetailView(APIView):
         try:
             venue = _UPDATE_UC(_REPO()).execute(venue_id=venue_id, **d)
         except VenueNotFoundError as exc:
-            return error_response(
-                code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request
-            )
+            return error_response(code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request)
         return success_response(VenueResponseSerializer(venue).data, request=request)
 
     @extend_schema(
@@ -158,9 +154,7 @@ class VenueDetailView(APIView):
         try:
             _DELETE_UC(_REPO()).execute(venue_id=venue_id)
         except VenueNotFoundError as exc:
-            return error_response(
-                code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request
-            )
+            return error_response(code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request)
         return Response(status=204)
 
 
@@ -182,12 +176,8 @@ class VenueSpaceListCreateView(APIView):
         try:
             spaces = _LIST_SPACES_UC(_REPO(), _SPACE_REPO()).execute(venue_id=venue_id)
         except VenueNotFoundError as exc:
-            return error_response(
-                code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request
-            )
-        return success_response(
-            VenueSpaceResponseSerializer(spaces, many=True).data, request=request
-        )
+            return error_response(code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request)
+        return success_response(VenueSpaceResponseSerializer(spaces, many=True).data, request=request)
 
     @extend_schema(
         tags=["Venues"],
@@ -211,7 +201,5 @@ class VenueSpaceListCreateView(APIView):
                 floor=d.get("floor", ""),
             )
         except VenueNotFoundError as exc:
-            return error_response(
-                code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request
-            )
+            return error_response(code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request)
         return _CREATED(VenueSpaceResponseSerializer(space).data, request=request)

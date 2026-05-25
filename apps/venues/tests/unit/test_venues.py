@@ -101,8 +101,6 @@ def test_list_spaces_returns_venue_spaces():
     space = make_space(venue_id=venue.id)
     space_repo = FakeVenueSpaceRepository()
     space_repo.create(space)
-    results = ListVenueSpacesUseCase(FakeVenueRepository([venue]), space_repo).execute(
-        venue_id=venue.id
-    )
+    results = ListVenueSpacesUseCase(FakeVenueRepository([venue]), space_repo).execute(venue_id=venue.id)
     assert len(results) == 1
     assert results[0].id == space.id

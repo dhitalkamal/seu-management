@@ -45,11 +45,7 @@ class FakeVenueRepository(IVenueRepository):
 
     def list_by_org(self, organisation_id: uuid.UUID) -> list[VenueEntity]:
         """Return all non-deleted venues for an organisation."""
-        return [
-            v
-            for v in self._store.values()
-            if v.organisation_id == organisation_id and v.deleted_at is None
-        ]
+        return [v for v in self._store.values() if v.organisation_id == organisation_id and v.deleted_at is None]
 
     def get_by_id(self, venue_id: uuid.UUID) -> VenueEntity:
         """Raise VenueNotFoundError if not found."""

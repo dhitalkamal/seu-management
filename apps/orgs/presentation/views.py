@@ -85,8 +85,7 @@ class HealthCheckView(APIView):
         tags=["Health"],
         summary="Service health check",
         description=(
-            "Checks connectivity to PostgreSQL, Redis, and RabbitMQ. "
-            "Returns 200 when all dependencies are healthy, 503 when any are down."
+            "Checks connectivity to PostgreSQL, Redis, and RabbitMQ. Returns 200 when all dependencies are healthy, 503 when any are down."
         ),
         auth=[],
         responses={
@@ -180,11 +179,7 @@ class OrgListCreateView(APIView):
     @extend_schema(
         tags=["Organisations"],
         summary="List my organisations",
-        responses={
-            200: OpenApiResponse(
-                description="Paginated org list.", response=_ORG_RESP_SER(many=True)
-            )
-        },
+        responses={200: OpenApiResponse(description="Paginated org list.", response=_ORG_RESP_SER(many=True))},
     )
     def get(self, request: Request) -> Response:
         """Return orgs where the authenticated user is an active member."""

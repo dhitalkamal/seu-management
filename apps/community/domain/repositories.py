@@ -9,6 +9,7 @@ from apps.community.domain.entities import (
     CommunityEntity,
     CommunityMemberEntity,
     CommunityPostEntity,
+    PostReactionEntity,
 )
 
 
@@ -40,9 +41,7 @@ class ICommunityMemberRepository(ABC):
     """Persistence interface for community memberships."""
 
     @abstractmethod
-    def get_membership(
-        self, community_id: uuid.UUID, user_id: uuid.UUID
-    ) -> CommunityMemberEntity | None:
+    def get_membership(self, community_id: uuid.UUID, user_id: uuid.UUID) -> CommunityMemberEntity | None:
         """Return the membership if it exists, else None."""
 
     @abstractmethod
@@ -72,3 +71,23 @@ class ICommunityPostRepository(ABC):
     @abstractmethod
     def update(self, post: CommunityPostEntity) -> None:
         """Persist changes to an existing post."""
+
+
+class IPostReactionRepository(ABC):
+    """Persistence interface for post reactions."""
+
+    @abstractmethod
+    def upsert(self, reaction: PostReactionEntity) -> PostReactionEntity:
+        """Insert or replace the reaction for (post_id, user_id)."""
+
+    @abstractmethod
+    def delete(self, post_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """Remove the reaction, raising ReactionNotFoundError if absent."""
+
+    @abstractmethod
+    def get_by_post_and_user(self, post_id: uuid.UUID, user_id: uuid.UUID) -> PostReactionEntity | None:
+        """Return the reaction if it exists, else None."""
+
+    @abstractmethod
+    def list_by_post(self, post_id: uuid.UUID) -> list[PostReactionEntity]:
+        """Return all reactions for a given post."""

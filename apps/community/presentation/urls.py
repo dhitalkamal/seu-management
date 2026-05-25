@@ -10,6 +10,8 @@ from .views import (
     CommunityListCreateView,
     CommunityPostDetailView,
     CommunityPostListCreateView,
+    PostReactionDeleteView,
+    PostReactionView,
 )
 
 urlpatterns: list[URLPattern] = [
@@ -22,4 +24,10 @@ urlpatterns: list[URLPattern] = [
         name="community-post-list-create",
     ),
     path("posts/<uuid:post_id>/", CommunityPostDetailView.as_view(), name="community-post-detail"),
+    path("posts/<uuid:post_id>/reactions/", PostReactionView.as_view(), name="post-reaction"),
+    path(
+        "posts/<uuid:post_id>/reactions/<str:reaction_type>/",
+        PostReactionDeleteView.as_view(),
+        name="post-reaction-delete",
+    ),
 ]

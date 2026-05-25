@@ -18,22 +18,29 @@ from apps.community.application.use_cases.get_community import GetCommunityUseCa
 from apps.community.application.use_cases.join_community import JoinCommunityUseCase
 from apps.community.application.use_cases.list_communities import ListCommunitiesUseCase
 from apps.community.application.use_cases.list_posts import ListPostsUseCase
+from apps.community.application.use_cases.list_reactions import ListReactionsUseCase
+from apps.community.application.use_cases.react_to_post import ReactToPostUseCase
+from apps.community.application.use_cases.remove_reaction import RemoveReactionUseCase
 from apps.community.domain.exceptions import (
     AlreadyMemberError,
     CommunityNotFoundError,
     CommunityPostNotFoundError,
+    ReactionNotFoundError,
     SlugAlreadyExistsError,
 )
 from apps.community.infrastructure.repositories import (
     DjangoCommunityMemberRepository,
     DjangoCommunityPostRepository,
     DjangoCommunityRepository,
+    DjangoPostReactionRepository,
 )
 from apps.community.presentation.serializers import (
     CommunityPostResponseSerializer,
     CommunityResponseSerializer,
     CreateCommunitySerializer,
     CreatePostSerializer,
+    PostReactionResponseSerializer,
+    ReactToPostSerializer,
 )
 
 _CREATED = created_response
@@ -44,9 +51,13 @@ _JOIN_UC = JoinCommunityUseCase
 _LIST_POSTS_UC = ListPostsUseCase
 _CREATE_POST_UC = CreatePostUseCase
 _DELETE_POST_UC = DeletePostUseCase
+_REACT_UC = ReactToPostUseCase
+_REMOVE_REACT_UC = RemoveReactionUseCase
+_LIST_REACTIONS_UC = ListReactionsUseCase
 _REPO = DjangoCommunityRepository
 _MEMBER_REPO = DjangoCommunityMemberRepository
 _POST_REPO = DjangoCommunityPostRepository
+_REACTION_REPO = DjangoPostReactionRepository
 
 
 class CommunityListCreateView(APIView):
@@ -62,9 +73,7 @@ class CommunityListCreateView(APIView):
     def get(self, request: Request) -> Response:
         """Return all active communities."""
         communities = _LIST_UC(_REPO()).execute()
-        return success_response(
-            CommunityResponseSerializer(communities, many=True).data, request=request
-        )
+        return success_response(CommunityResponseSerializer(communities, many=True).data, request=request)
 
     @extend_schema(
         tags=["Community"],
@@ -188,9 +197,7 @@ class CommunityPostListCreateView(APIView):
                 http_status=404,
                 request=request,
             )
-        return success_response(
-            CommunityPostResponseSerializer(posts, many=True).data, request=request
-        )
+        return success_response(CommunityPostResponseSerializer(posts, many=True).data, request=request)
 
     @extend_schema(
         tags=["Community"],
@@ -247,6 +254,78 @@ class CommunityPostDetailView(APIView):
         except CommunityPostNotFoundError as exc:
             return error_response(
                 code="ERR_POST_NOT_FOUND",
+                message=str(exc),
+                http_status=404,
+                request=request,
+            )
+        return Response(status=204)
+
+
+class PostReactionView(APIView):
+    """POST /communities/posts/{post_id}/reactions/ - add or replace a reaction."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Community"],
+        summary="React to post",
+        request=ReactToPostSerializer,
+        responses={
+            201: OpenApiResponse(description="Reaction saved.", response=PostReactionResponseSerializer),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Post not found."),
+        },
+    )
+    def post(self, request: Request, post_id: uuid.UUID) -> Response:
+        """Upsert the authenticated user's reaction on a post."""
+        ser = ReactToPostSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        result = _REACT_UC(_POST_REPO(), _REACTION_REPO()).execute(
+            post_id=post_id,
+            user_id=uuid.UUID(str(request.user.id)),
+            reaction_type=ser.validated_data["reaction_type"],
+        )
+        return _CREATED(PostReactionResponseSerializer(result).data, request=request)
+
+    @extend_schema(
+        tags=["Community"],
+        summary="List post reactions",
+        responses={
+            200: OpenApiResponse(description="Reactions.", response=PostReactionResponseSerializer(many=True)),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+        },
+    )
+    def get(self, request: Request, post_id: uuid.UUID) -> Response:
+        """Return all reactions for the post."""
+        results = _LIST_REACTIONS_UC(_REACTION_REPO()).execute(post_id=post_id)
+        return success_response(PostReactionResponseSerializer(results, many=True).data, request=request)
+
+
+class PostReactionDeleteView(APIView):
+    """DELETE /communities/posts/{post_id}/reactions/{reaction_type}/"""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Community"],
+        summary="Remove reaction",
+        responses={
+            204: OpenApiResponse(description="Reaction removed."),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Reaction not found."),
+        },
+    )
+    def delete(self, request: Request, post_id: uuid.UUID, reaction_type: str) -> Response:
+        """Remove the authenticated user's reaction from a post."""
+        try:
+            _REMOVE_REACT_UC(_POST_REPO(), _REACTION_REPO()).execute(
+                post_id=post_id,
+                user_id=uuid.UUID(str(request.user.id)),
+                reaction_type=reaction_type,
+            )
+        except ReactionNotFoundError as exc:
+            return error_response(
+                code="ERR_REACTION_NOT_FOUND",
                 message=str(exc),
                 http_status=404,
                 request=request,

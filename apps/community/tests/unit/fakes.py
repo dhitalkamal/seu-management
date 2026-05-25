@@ -9,12 +9,14 @@ from apps.community.domain.entities import (
     CommunityEntity,
     CommunityMemberEntity,
     CommunityPostEntity,
+    PostReactionEntity,
 )
-from apps.community.domain.exceptions import CommunityNotFoundError, CommunityPostNotFoundError
+from apps.community.domain.exceptions import CommunityNotFoundError, CommunityPostNotFoundError, ReactionNotFoundError
 from apps.community.domain.repositories import (
     ICommunityMemberRepository,
     ICommunityPostRepository,
     ICommunityRepository,
+    IPostReactionRepository,
 )
 
 
@@ -93,9 +95,7 @@ class FakeCommunityMemberRepository(ICommunityMemberRepository):
     def __init__(self) -> None:
         self._store: dict[tuple[uuid.UUID, uuid.UUID], CommunityMemberEntity] = {}
 
-    def get_membership(
-        self, community_id: uuid.UUID, user_id: uuid.UUID
-    ) -> CommunityMemberEntity | None:
+    def get_membership(self, community_id: uuid.UUID, user_id: uuid.UUID) -> CommunityMemberEntity | None:
         """Return membership or None."""
         return self._store.get((community_id, user_id))
 
@@ -116,11 +116,7 @@ class FakeCommunityPostRepository(ICommunityPostRepository):
 
     def list_by_community(self, community_id: uuid.UUID) -> list[CommunityPostEntity]:
         """Return published posts for a community."""
-        return [
-            p
-            for p in self._store.values()
-            if p.community_id == community_id and p.status == "published"
-        ]
+        return [p for p in self._store.values() if p.community_id == community_id and p.status == "published"]
 
     def get_by_id(self, post_id: uuid.UUID) -> CommunityPostEntity:
         """Raise CommunityPostNotFoundError if not found."""
@@ -136,3 +132,47 @@ class FakeCommunityPostRepository(ICommunityPostRepository):
     def update(self, post: CommunityPostEntity) -> None:
         """Update an existing post."""
         self._store[post.id] = post
+
+
+class FakePostReactionRepository(IPostReactionRepository):
+    """In-memory reaction store keyed by (post_id, user_id)."""
+
+    def __init__(self) -> None:
+        self._store: dict[tuple[uuid.UUID, uuid.UUID], PostReactionEntity] = {}
+
+    def upsert(self, reaction: PostReactionEntity) -> PostReactionEntity:
+        """Insert or replace the reaction for (post_id, user_id)."""
+        self._store[(reaction.post_id, reaction.user_id)] = reaction
+        return reaction
+
+    def delete(self, post_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """Remove the reaction; raise ReactionNotFoundError if absent."""
+        key = (post_id, user_id)
+        if key not in self._store:
+            raise ReactionNotFoundError("No reaction found.")
+        del self._store[key]
+
+    def get_by_post_and_user(self, post_id: uuid.UUID, user_id: uuid.UUID) -> PostReactionEntity | None:
+        """Return the reaction if it exists, else None."""
+        return self._store.get((post_id, user_id))
+
+    def list_by_post(self, post_id: uuid.UUID) -> list[PostReactionEntity]:
+        """Return all reactions for a given post."""
+        return [r for r in self._store.values() if r.post_id == post_id]
+
+
+def make_reaction(
+    post_id: uuid.UUID,
+    user_id: uuid.UUID | None = None,
+    reaction_type: str = "like",
+) -> PostReactionEntity:
+    """Build a PostReactionEntity with sensible defaults for testing."""
+    from datetime import datetime, timezone
+
+    return PostReactionEntity(
+        id=uuid.uuid4(),
+        post_id=post_id,
+        user_id=user_id or uuid.uuid4(),
+        reaction_type=reaction_type,
+        created_at=datetime.now(timezone.utc),
+    )

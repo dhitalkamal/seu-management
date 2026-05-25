@@ -8,14 +8,16 @@ from apps.community.domain.entities import (
     CommunityEntity,
     CommunityMemberEntity,
     CommunityPostEntity,
+    PostReactionEntity,
 )
-from apps.community.domain.exceptions import CommunityNotFoundError, CommunityPostNotFoundError
+from apps.community.domain.exceptions import CommunityNotFoundError, CommunityPostNotFoundError, ReactionNotFoundError
 from apps.community.domain.repositories import (
     ICommunityMemberRepository,
     ICommunityPostRepository,
     ICommunityRepository,
+    IPostReactionRepository,
 )
-from apps.community.infrastructure.models import Community, CommunityMember, CommunityPost
+from apps.community.infrastructure.models import Community, CommunityMember, CommunityPost, CommunityPostReaction
 
 
 class DjangoCommunityRepository(ICommunityRepository):
@@ -54,14 +56,10 @@ class DjangoCommunityRepository(ICommunityRepository):
 class DjangoCommunityMemberRepository(ICommunityMemberRepository):
     """PostgreSQL-backed community membership repository."""
 
-    def get_membership(
-        self, community_id: uuid.UUID, user_id: uuid.UUID
-    ) -> CommunityMemberEntity | None:
+    def get_membership(self, community_id: uuid.UUID, user_id: uuid.UUID) -> CommunityMemberEntity | None:
         """Return the membership if it exists, else None."""
         try:
-            return CommunityMember.objects.get(
-                community_id=community_id, user_id=user_id
-            ).to_entity()
+            return CommunityMember.objects.get(community_id=community_id, user_id=user_id).to_entity()
         except CommunityMember.DoesNotExist:
             return None
 
@@ -79,10 +77,7 @@ class DjangoCommunityPostRepository(ICommunityPostRepository):
 
     def list_by_community(self, community_id: uuid.UUID) -> list[CommunityPostEntity]:
         """Return all published posts for a community."""
-        return [
-            p.to_entity()
-            for p in CommunityPost.objects.filter(community_id=community_id, status="published")
-        ]
+        return [p.to_entity() for p in CommunityPost.objects.filter(community_id=community_id, status="published")]
 
     def get_by_id(self, post_id: uuid.UUID) -> CommunityPostEntity:
         """Raise CommunityPostNotFoundError if not found."""
@@ -103,6 +98,37 @@ class DjangoCommunityPostRepository(ICommunityPostRepository):
             like_count=post.like_count,
             comment_count=post.comment_count,
             report_count=post.report_count,
+            reaction_counts=post.reaction_counts,
             is_pinned=post.is_pinned,
             deleted_at=post.deleted_at,
         )
+
+
+class DjangoPostReactionRepository(IPostReactionRepository):
+    """PostgreSQL-backed post reaction repository."""
+
+    def upsert(self, reaction: PostReactionEntity) -> PostReactionEntity:
+        """Insert or replace the reaction for (post_id, user_id)."""
+        obj, _ = CommunityPostReaction.objects.update_or_create(
+            post_id=reaction.post_id,
+            user_id=reaction.user_id,
+            defaults={"id": reaction.id, "reaction_type": reaction.reaction_type},
+        )
+        return obj.to_entity()
+
+    def delete(self, post_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """Remove the reaction; raise ReactionNotFoundError if absent."""
+        deleted, _ = CommunityPostReaction.objects.filter(post_id=post_id, user_id=user_id).delete()
+        if not deleted:
+            raise ReactionNotFoundError(f"No reaction from user {user_id} on post {post_id}.")
+
+    def get_by_post_and_user(self, post_id: uuid.UUID, user_id: uuid.UUID) -> PostReactionEntity | None:
+        """Return the reaction if it exists, else None."""
+        try:
+            return CommunityPostReaction.objects.get(post_id=post_id, user_id=user_id).to_entity()
+        except CommunityPostReaction.DoesNotExist:
+            return None
+
+    def list_by_post(self, post_id: uuid.UUID) -> list[PostReactionEntity]:
+        """Return all reactions for a given post."""
+        return [r.to_entity() for r in CommunityPostReaction.objects.filter(post_id=post_id)]

@@ -33,9 +33,7 @@ class CreatePostSerializer(serializers.Serializer):
     """Request body for creating a community post."""
 
     content = serializers.CharField()
-    post_type = serializers.ChoiceField(
-        choices=["text", "image", "video", "link", "poll"], default="text"
-    )
+    post_type = serializers.ChoiceField(choices=["text", "image", "video", "link", "poll"], default="text")
     media_urls = serializers.ListField(child=serializers.CharField(), required=False, default=list)
 
 
@@ -52,4 +50,21 @@ class CommunityPostResponseSerializer(serializers.Serializer):
     comment_count = serializers.IntegerField()
     is_pinned = serializers.BooleanField()
     media_urls = serializers.ListField(child=serializers.CharField())
+    reaction_counts = serializers.DictField(child=serializers.IntegerField())
+    created_at = serializers.DateTimeField()
+
+
+class ReactToPostSerializer(serializers.Serializer):
+    """Request body for adding or replacing a reaction."""
+
+    reaction_type = serializers.ChoiceField(choices=["like", "love", "fire", "laugh", "sad", "angry"])
+
+
+class PostReactionResponseSerializer(serializers.Serializer):
+    """Public shape of a post reaction resource."""
+
+    id = serializers.UUIDField()
+    post_id = serializers.UUIDField()
+    user_id = serializers.UUIDField()
+    reaction_type = serializers.CharField()
     created_at = serializers.DateTimeField()

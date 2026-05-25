@@ -17,3 +17,7 @@ class AlreadyMemberError(Exception):
 
 class SlugAlreadyExistsError(Exception):
     """Raised when a slug is already taken."""
+
+
+class ReactionNotFoundError(Exception):
+    """Raised when a user tries to remove a reaction that does not exist."""

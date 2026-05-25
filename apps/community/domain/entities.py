@@ -49,4 +49,16 @@ class CommunityPostEntity:
     is_pinned: bool
     created_at: datetime
     media_urls: list[str] = field(default_factory=list)
+    reaction_counts: dict[str, int] = field(default_factory=dict)
     deleted_at: datetime | None = None
+
+
+@dataclass(slots=True)
+class PostReactionEntity:
+    """A single user reaction to a community post."""
+
+    id: uuid.UUID
+    post_id: uuid.UUID
+    user_id: uuid.UUID
+    reaction_type: str
+    created_at: datetime

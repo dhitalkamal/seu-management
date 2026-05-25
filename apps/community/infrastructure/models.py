@@ -10,6 +10,7 @@ from apps.community.domain.entities import (
     CommunityEntity,
     CommunityMemberEntity,
     CommunityPostEntity,
+    PostReactionEntity,
 )
 
 
@@ -71,9 +72,7 @@ class CommunityMember(models.Model):
 
     class Meta:
         db_table = '"community"."community_member"'
-        constraints = [
-            models.UniqueConstraint(fields=["community", "user_id"], name="unique_community_member")
-        ]
+        constraints = [models.UniqueConstraint(fields=["community", "user_id"], name="unique_community_member")]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="members")
@@ -125,6 +124,7 @@ class CommunityPost(models.Model):
     post_type = models.CharField(max_length=20, choices=PostType.choices, default=PostType.TEXT)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PUBLISHED)
     media_urls = models.JSONField(default=list)
+    reaction_counts = models.JSONField(default=dict)
     like_count = models.IntegerField(default=0)
     comment_count = models.IntegerField(default=0)
     report_count = models.IntegerField(default=0)
@@ -147,6 +147,7 @@ class CommunityPost(models.Model):
             is_pinned=self.is_pinned,
             created_at=self.created_at,
             media_urls=self.media_urls or [],
+            reaction_counts=self.reaction_counts or {},
             deleted_at=self.deleted_at,
         )
 
@@ -161,9 +162,52 @@ class CommunityPost(models.Model):
             post_type=entity.post_type,
             status=entity.status,
             media_urls=entity.media_urls,
+            reaction_counts=entity.reaction_counts,
             like_count=entity.like_count,
             comment_count=entity.comment_count,
             report_count=entity.report_count,
             is_pinned=entity.is_pinned,
             deleted_at=entity.deleted_at,
+        )
+
+
+class CommunityPostReaction(models.Model):
+    """A single user reaction on a community post."""
+
+    class ReactionType(models.TextChoices):
+        LIKE = "like", "Like"
+        LOVE = "love", "Love"
+        FIRE = "fire", "Fire"
+        LAUGH = "laugh", "Laugh"
+        SAD = "sad", "Sad"
+        ANGRY = "angry", "Angry"
+
+    class Meta:
+        db_table = '"community"."community_post_reaction"'
+        constraints = [models.UniqueConstraint(fields=["post", "user_id"], name="unique_post_reaction_per_user")]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name="reactions")
+    user_id = models.UUIDField()
+    reaction_type = models.CharField(max_length=10, choices=ReactionType.choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def to_entity(self) -> PostReactionEntity:
+        """Map this ORM row to a pure-Python PostReactionEntity."""
+        return PostReactionEntity(
+            id=self.id,
+            post_id=self.post_id,
+            user_id=self.user_id,
+            reaction_type=self.reaction_type,
+            created_at=self.created_at,
+        )
+
+    @classmethod
+    def from_entity(cls, entity: PostReactionEntity) -> "CommunityPostReaction":
+        """Build an unsaved ORM instance from a PostReactionEntity."""
+        return cls(
+            id=entity.id,
+            post_id=entity.post_id,
+            user_id=entity.user_id,
+            reaction_type=entity.reaction_type,
         )

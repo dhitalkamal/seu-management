@@ -28,9 +28,7 @@ def test_approve_sets_status_approved():
 def test_approve_missing_raises():
     """Approving a non-existent application raises ApplicationNotFoundError."""
     with pytest.raises(ApplicationNotFoundError):
-        ApproveApplicationUseCase(FakeVolunteerApplicationRepository()).execute(
-            application_id=uuid.uuid4()
-        )
+        ApproveApplicationUseCase(FakeVolunteerApplicationRepository()).execute(application_id=uuid.uuid4())
 
 
 def test_reject_sets_status_rejected():

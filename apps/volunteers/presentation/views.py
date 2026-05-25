@@ -69,7 +69,7 @@ class VolunteerRoleView(APIView):
             name=d["name"],
             description=d["description"],
             capacity=d["capacity"],
-            organisation_id=d["organisation_id"],
+            organization_id=d["organization_id"],
         )
         return _CREATED(_ROLE_RESP_SER(result).data, request=request)
 

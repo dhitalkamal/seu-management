@@ -17,7 +17,7 @@ class VolunteerRoleEntity:
     capacity: int
     is_active: bool
     created_at: datetime
-    organisation_id: uuid.UUID | None = None
+    organization_id: uuid.UUID | None = None
     description: str = ""
 
 

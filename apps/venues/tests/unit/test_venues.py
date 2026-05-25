@@ -15,10 +15,10 @@ def test_list_venues_returns_org_venues():
     from apps.venues.application.use_cases.list_venues import ListVenuesUseCase
 
     org_id = uuid.uuid4()
-    mine = make_venue(organisation_id=org_id)
+    mine = make_venue(organization_id=org_id)
     other = make_venue()
     repo = FakeVenueRepository([mine, other])
-    results = ListVenuesUseCase(repo).execute(organisation_id=org_id)
+    results = ListVenuesUseCase(repo).execute(organization_id=org_id)
     assert len(results) == 1
     assert results[0].id == mine.id
 
@@ -29,7 +29,7 @@ def test_create_venue_success():
 
     repo = FakeVenueRepository()
     result = CreateVenueUseCase(repo).execute(
-        organisation_id=uuid.uuid4(),
+        organization_id=uuid.uuid4(),
         created_by=uuid.uuid4(),
         name="Grand Hall",
         address="123 Street",
@@ -101,8 +101,6 @@ def test_list_spaces_returns_venue_spaces():
     space = make_space(venue_id=venue.id)
     space_repo = FakeVenueSpaceRepository()
     space_repo.create(space)
-    results = ListVenueSpacesUseCase(FakeVenueRepository([venue]), space_repo).execute(
-        venue_id=venue.id
-    )
+    results = ListVenueSpacesUseCase(FakeVenueRepository([venue]), space_repo).execute(venue_id=venue.id)
     assert len(results) == 1
     assert results[0].id == space.id

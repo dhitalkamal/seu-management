@@ -39,15 +39,32 @@ def ensure_bucket_exists(client: "S3Client", bucket: str) -> None:
             raise
 
 
+ALLOWED_MIME_TYPES = {
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/webp",
+    "image/svg+xml",
+}
+
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
 def upload_file(file_obj: BinaryIO, file_name: str, content_type: str = "application/octet-stream") -> str:
     """
     Upload a file to MinIO and return its public URL.
+
+    Accepts PDF, PNG, JPG, WEBP, and SVG up to 10 MB.
 
     @param file_obj - file-like object to upload
     @param file_name - original file name (used to derive extension)
     @param content_type - MIME type of the file
     @returns public URL string
+    @raises ValueError if the MIME type or file size is not allowed
     """
+    if content_type not in ALLOWED_MIME_TYPES:
+        raise ValueError(f"File type '{content_type}' is not allowed. Upload PDF, PNG, JPG, WEBP, or SVG.")
     client = get_s3_client()
     bucket = settings.MINIO_BUCKET
     ensure_bucket_exists(client, bucket)
@@ -55,11 +72,12 @@ def upload_file(file_obj: BinaryIO, file_name: str, content_type: str = "applica
     ext = file_name.rsplit(".", 1)[-1] if "." in file_name else "bin"
     key = f"org-docs/{uuid.uuid4()}.{ext}"
 
+    # bucket policy already grants public-read; ACL param causes errors on some MinIO versions
     client.upload_fileobj(
         file_obj,
         bucket,
         key,
-        ExtraArgs={"ContentType": content_type, "ACL": "public-read"},
+        ExtraArgs={"ContentType": content_type},
     )
 
     return f"{settings.MINIO_PUBLIC_BASE_URL}/{key}"

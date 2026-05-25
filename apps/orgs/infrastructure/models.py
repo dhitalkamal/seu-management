@@ -9,8 +9,8 @@ from django.db import models
 from apps.orgs.domain.entities import OrgEntity, OrgMemberEntity
 
 
-class Organisation(models.Model):
-    """A platform organisation."""
+class Organization(models.Model):
+    """A platform organization."""
 
     class OrgType(models.TextChoices):
         COMPANY = "company", "Company"
@@ -34,7 +34,7 @@ class Organisation(models.Model):
         ENTERPRISE = "enterprise", "Enterprise"
 
     class Meta:
-        db_table = '"orgs"."organisation"'
+        db_table = '"orgs"."organization"'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_by = models.UUIDField()
@@ -92,7 +92,7 @@ class Organisation(models.Model):
         )
 
     @classmethod
-    def from_entity(cls, entity: OrgEntity) -> "Organisation":
+    def from_entity(cls, entity: OrgEntity) -> "Organization":
         """Build an unsaved ORM instance from an OrgEntity."""
         return cls(
             id=entity.id,
@@ -121,7 +121,7 @@ class Organisation(models.Model):
 
 
 class OrgMember(models.Model):
-    """A membership record linking a user to an organisation."""
+    """A membership record linking a user to an organization."""
 
     class Role(models.TextChoices):
         OWNER = "owner", "Owner"
@@ -133,13 +133,13 @@ class OrgMember(models.Model):
         db_table = '"orgs"."org_member"'
         constraints = [
             models.UniqueConstraint(
-                fields=["organisation", "user_id"],
+                fields=["organization", "user_id"],
                 name="unique_org_member",
             )
         ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name="members")
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="members")
     user_id = models.UUIDField()
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.MEMBER)
     is_active = models.BooleanField(default=True)
@@ -149,7 +149,7 @@ class OrgMember(models.Model):
         """Map this ORM row to a pure-Python OrgMemberEntity."""
         return OrgMemberEntity(
             id=self.id,
-            organisation_id=self.organisation_id,
+            organization_id=self.organization_id,
             user_id=self.user_id,
             role=self.role,
             is_active=self.is_active,
@@ -161,7 +161,7 @@ class OrgMember(models.Model):
         """Build an unsaved ORM instance from an OrgMemberEntity."""
         return cls(
             id=entity.id,
-            organisation_id=entity.organisation_id,
+            organization_id=entity.organization_id,
             user_id=entity.user_id,
             role=entity.role,
             is_active=entity.is_active,
@@ -169,7 +169,7 @@ class OrgMember(models.Model):
 
 
 class AllowedDomain(models.Model):
-    """Whitelisted email domain for an organisation's private events."""
+    """Whitelisted email domain for an organization's private events."""
 
     class MatchType(models.TextChoices):
         EXACT = "exact", "Exact match (e.g. company.com)"
@@ -179,15 +179,13 @@ class AllowedDomain(models.Model):
         db_table = '"orgs"."allowed_domain"'
         constraints = [
             models.UniqueConstraint(
-                fields=["organisation", "domain"],
+                fields=["organization", "domain"],
                 name="unique_org_allowed_domain",
             )
         ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organisation = models.ForeignKey(
-        Organisation, on_delete=models.CASCADE, related_name="allowed_domains"
-    )
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="allowed_domains")
     domain = models.CharField(max_length=253)
     match_type = models.CharField(max_length=10, choices=MatchType.choices, default=MatchType.EXACT)
     is_active = models.BooleanField(default=True)
@@ -208,9 +206,7 @@ class OrgDocument(models.Model):
         db_table = '"orgs"."org_document"'
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organisation = models.ForeignKey(
-        Organisation, on_delete=models.CASCADE, related_name="documents"
-    )
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="documents")
     doc_type = models.CharField(max_length=30, choices=DocType.choices)
     file_url = models.URLField()
     file_name = models.CharField(max_length=255)

@@ -6,36 +6,36 @@ import uuid
 
 from apps.orgs.domain.entities import OrgEntity, OrgMemberEntity
 from apps.orgs.domain.exceptions import OrgNotFoundError
-from apps.orgs.domain.repositories import IOrganisationRepository, IOrgMemberRepository
-from apps.orgs.infrastructure.models import Organisation, OrgDocument, OrgMember
+from apps.orgs.domain.repositories import IOrganizationRepository, IOrgMemberRepository
+from apps.orgs.infrastructure.models import Organization, OrgDocument, OrgMember
 
 
-class DjangoOrgRepository(IOrganisationRepository):
-    """Persists Organisation entities using the Django ORM."""
+class DjangoOrgRepository(IOrganizationRepository):
+    """Persists Organization entities using the Django ORM."""
 
     def create(self, entity: OrgEntity) -> OrgEntity:
-        """Persist a new organisation and return the saved entity."""
-        obj = Organisation.from_entity(entity)
+        """Persist a new organization and return the saved entity."""
+        obj = Organization.from_entity(entity)
         obj.save(using="default")
         return obj.to_entity()
 
     def get_by_id(self, org_id: uuid.UUID) -> OrgEntity:
         """Fetch by id, excluding soft-deleted rows. Raises OrgNotFoundError if absent."""
         try:
-            return Organisation.objects.get(id=org_id, deleted_at__isnull=True).to_entity()
-        except Organisation.DoesNotExist:
-            raise OrgNotFoundError("Organisation not found.")
+            return Organization.objects.get(id=org_id, deleted_at__isnull=True).to_entity()
+        except Organization.DoesNotExist:
+            raise OrgNotFoundError("Organization not found.")
 
     def get_by_slug(self, slug: str) -> OrgEntity | None:
         """Return the org with this slug or None."""
         try:
-            return Organisation.objects.get(slug=slug).to_entity()
-        except Organisation.DoesNotExist:
+            return Organization.objects.get(slug=slug).to_entity()
+        except Organization.DoesNotExist:
             return None
 
     def update(self, entity: OrgEntity) -> OrgEntity:
         """Fetch the existing row, sync every mutable field, and save."""
-        obj = Organisation.objects.get(id=entity.id)
+        obj = Organization.objects.get(id=entity.id)
         # * profile fields
         obj.name = entity.name
         obj.description = entity.description
@@ -63,15 +63,12 @@ class DjangoOrgRepository(IOrganisationRepository):
 
     def list_by_user(self, user_id: uuid.UUID) -> list[OrgEntity]:
         """Return all non-deleted orgs where the user has an active membership."""
-        org_ids = OrgMember.objects.filter(user_id=user_id, is_active=True).values_list(
-            "organisation_id", flat=True
-        )
-        return [
-            obj.to_entity()
-            for obj in Organisation.objects.filter(
-                id__in=org_ids, deleted_at__isnull=True
-            ).order_by("-created_at")
-        ]
+        org_ids = OrgMember.objects.filter(user_id=user_id, is_active=True).values_list("organization_id", flat=True)
+        return [obj.to_entity() for obj in Organization.objects.filter(id__in=org_ids, deleted_at__isnull=True).order_by("-created_at")]
+
+    def list_all(self) -> list[OrgEntity]:
+        """Return all non-deleted orgs, newest first. Used by staff/superadmin."""
+        return [obj.to_entity() for obj in Organization.objects.filter(deleted_at__isnull=True).order_by("-created_at")]
 
 
 class DjangoOrgMemberRepository(IOrgMemberRepository):
@@ -85,9 +82,7 @@ class DjangoOrgMemberRepository(IOrgMemberRepository):
 
     def exists(self, org_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """True if an active membership exists for this (org, user) pair."""
-        return OrgMember.objects.filter(
-            organisation_id=org_id, user_id=user_id, is_active=True
-        ).exists()
+        return OrgMember.objects.filter(organization_id=org_id, user_id=user_id, is_active=True).exists()
 
 
 class DjangoOrgDocumentRepository:
@@ -103,7 +98,7 @@ class DjangoOrgDocumentRepository:
     ) -> OrgDocument:
         """Persist a new document record and return the ORM object."""
         return OrgDocument.objects.create(
-            organisation_id=org_id,
+            organization_id=org_id,
             doc_type=doc_type,
             file_url=file_url,
             file_name=file_name,
@@ -111,8 +106,8 @@ class DjangoOrgDocumentRepository:
         )
 
     def list_for_org(self, org_id: uuid.UUID) -> list[OrgDocument]:
-        """Return all documents for an organisation, newest first."""
-        return list(OrgDocument.objects.filter(organisation_id=org_id).order_by("-uploaded_at"))
+        """Return all documents for an organization, newest first."""
+        return list(OrgDocument.objects.filter(organization_id=org_id).order_by("-uploaded_at"))
 
     def delete(self, doc_id: uuid.UUID) -> None:
         """Delete a document by primary key."""

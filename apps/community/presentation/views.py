@@ -62,9 +62,7 @@ class CommunityListCreateView(APIView):
     def get(self, request: Request) -> Response:
         """Return all active communities."""
         communities = _LIST_UC(_REPO()).execute()
-        return success_response(
-            CommunityResponseSerializer(communities, many=True).data, request=request
-        )
+        return success_response(CommunityResponseSerializer(communities, many=True).data, request=request)
 
     @extend_schema(
         tags=["Community"],
@@ -86,7 +84,7 @@ class CommunityListCreateView(APIView):
                 name=d["name"],
                 slug=d["slug"],
                 privacy=d["privacy"],
-                organisation_id=d.get("organisation_id"),
+                organization_id=d.get("organization_id"),
                 description=d.get("description", ""),
             )
         except SlugAlreadyExistsError as exc:
@@ -188,9 +186,7 @@ class CommunityPostListCreateView(APIView):
                 http_status=404,
                 request=request,
             )
-        return success_response(
-            CommunityPostResponseSerializer(posts, many=True).data, request=request
-        )
+        return success_response(CommunityPostResponseSerializer(posts, many=True).data, request=request)
 
     @extend_schema(
         tags=["Community"],

@@ -9,10 +9,10 @@ from datetime import datetime
 
 @dataclass(slots=True)
 class VenueEntity:
-    """A physical venue owned by an organisation."""
+    """A physical venue owned by an organization."""
 
     id: uuid.UUID
-    organisation_id: uuid.UUID
+    organization_id: uuid.UUID
     created_by: uuid.UUID
     name: str
     address: str

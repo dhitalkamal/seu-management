@@ -31,9 +31,7 @@ class DjangoVolunteerRoleRepository(IVolunteerRoleRepository):
 
     def count_approved(self, role_id: uuid.UUID) -> int:
         """Count approved applications for this role (used for capacity check)."""
-        return VolunteerApplication.objects.filter(
-            volunteer_role_id=role_id, status="approved"
-        ).count()
+        return VolunteerApplication.objects.filter(volunteer_role_id=role_id, status="approved").count()
 
 
 class DjangoVolunteerApplicationRepository(IVolunteerApplicationRepository):
@@ -47,11 +45,7 @@ class DjangoVolunteerApplicationRepository(IVolunteerApplicationRepository):
 
     def has_active(self, role_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """True if a non-cancelled application exists for this (role, user) pair."""
-        return (
-            VolunteerApplication.objects.filter(volunteer_role_id=role_id, user_id=user_id)
-            .exclude(status="cancelled")
-            .exists()
-        )
+        return VolunteerApplication.objects.filter(volunteer_role_id=role_id, user_id=user_id).exclude(status="cancelled").exists()
 
     def get_by_id(self, application_id: uuid.UUID) -> VolunteerApplicationEntity:
         """Fetch by ID. Raises ApplicationNotFoundError if absent."""
@@ -59,6 +53,7 @@ class DjangoVolunteerApplicationRepository(IVolunteerApplicationRepository):
             return VolunteerApplication.objects.get(id=application_id).to_entity()
         except VolunteerApplication.DoesNotExist:
             from apps.volunteers.domain.exceptions import ApplicationNotFoundError
+
             raise ApplicationNotFoundError("Application not found.")
 
     def update(self, entity: VolunteerApplicationEntity) -> VolunteerApplicationEntity:
@@ -68,7 +63,4 @@ class DjangoVolunteerApplicationRepository(IVolunteerApplicationRepository):
 
     def list_by_role(self, role_id: uuid.UUID) -> list[VolunteerApplicationEntity]:
         """Return all applications for the given role, newest first."""
-        return [
-            obj.to_entity()
-            for obj in VolunteerApplication.objects.filter(volunteer_role_id=role_id).order_by("-created_at")
-        ]
+        return [obj.to_entity() for obj in VolunteerApplication.objects.filter(volunteer_role_id=role_id).order_by("-created_at")]

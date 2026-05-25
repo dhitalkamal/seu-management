@@ -1,4 +1,4 @@
-"""Unit tests for CreateOrganisationUseCase."""
+"""Unit tests for CreateOrganizationUseCase."""
 
 from __future__ import annotations
 
@@ -6,20 +6,20 @@ import uuid
 
 import pytest
 
-from apps.orgs.application.use_cases.create_org import CreateOrganisationUseCase
+from apps.orgs.application.use_cases.create_org import CreateOrganizationUseCase
 from apps.orgs.domain.exceptions import OrgSlugTakenError
 from apps.orgs.tests.unit.fakes import FakeOrgMemberRepository, FakeOrgRepository, make_org
 
 
-def _uc(orgs=None) -> CreateOrganisationUseCase:
-    return CreateOrganisationUseCase(
+def _uc(orgs=None) -> CreateOrganizationUseCase:
+    return CreateOrganizationUseCase(
         org_repo=FakeOrgRepository(orgs or []),
         member_repo=FakeOrgMemberRepository(),
     )
 
 
 def test_create_org_status_is_pending_review():
-    """New organisations always start as pending_review."""
+    """New organizations always start as pending_review."""
     result = _uc().execute(
         created_by=uuid.uuid4(),
         name="Sansaar Events",
@@ -34,7 +34,7 @@ def test_create_org_creator_assigned_owner_membership():
     """The creator is automatically added as an owner member."""
     creator_id = uuid.uuid4()
     member_repo = FakeOrgMemberRepository()
-    CreateOrganisationUseCase(
+    CreateOrganizationUseCase(
         org_repo=FakeOrgRepository(),
         member_repo=member_repo,
     ).execute(

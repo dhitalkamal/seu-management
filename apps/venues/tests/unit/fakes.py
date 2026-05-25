@@ -10,11 +10,11 @@ from apps.venues.domain.exceptions import VenueNotFoundError
 from apps.venues.domain.repositories import IVenueRepository, IVenueSpaceRepository
 
 
-def make_venue(organisation_id: uuid.UUID | None = None) -> VenueEntity:
+def make_venue(organization_id: uuid.UUID | None = None) -> VenueEntity:
     """Build a VenueEntity with sensible defaults."""
     return VenueEntity(
         id=uuid.uuid4(),
-        organisation_id=organisation_id or uuid.uuid4(),
+        organization_id=organization_id or uuid.uuid4(),
         created_by=uuid.uuid4(),
         name="Test Venue",
         address="123 Test Street",
@@ -43,13 +43,9 @@ class FakeVenueRepository(IVenueRepository):
     def __init__(self, venues: list[VenueEntity] | None = None) -> None:
         self._store: dict[uuid.UUID, VenueEntity] = {v.id: v for v in (venues or [])}
 
-    def list_by_org(self, organisation_id: uuid.UUID) -> list[VenueEntity]:
-        """Return all non-deleted venues for an organisation."""
-        return [
-            v
-            for v in self._store.values()
-            if v.organisation_id == organisation_id and v.deleted_at is None
-        ]
+    def list_by_org(self, organization_id: uuid.UUID) -> list[VenueEntity]:
+        """Return all non-deleted venues for an organization."""
+        return [v for v in self._store.values() if v.organization_id == organization_id and v.deleted_at is None]
 
     def get_by_id(self, venue_id: uuid.UUID) -> VenueEntity:
         """Raise VenueNotFoundError if not found."""

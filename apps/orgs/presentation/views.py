@@ -16,15 +16,15 @@ from apps.common.api.pagination import StandardPagination
 from apps.common.api.responses import created_response, error_response, success_response
 from apps.common.health import check_database, check_rabbitmq, check_redis
 from apps.orgs.application.use_cases.add_member import AddOrgMemberUseCase
-from apps.orgs.application.use_cases.approve_org import ApproveOrganisationUseCase
-from apps.orgs.application.use_cases.create_org import CreateOrganisationUseCase
-from apps.orgs.application.use_cases.get_org import GetOrganisationUseCase
-from apps.orgs.application.use_cases.list_orgs import ListOrganisationsUseCase
-from apps.orgs.application.use_cases.reinstate_org import ReinstateOrganisationUseCase
-from apps.orgs.application.use_cases.reject_org import RejectOrganisationUseCase
-from apps.orgs.application.use_cases.soft_delete_org import SoftDeleteOrganisationUseCase
-from apps.orgs.application.use_cases.suspend_org import SuspendOrganisationUseCase
-from apps.orgs.application.use_cases.update_org import UpdateOrganisationUseCase
+from apps.orgs.application.use_cases.approve_org import ApproveOrganizationUseCase
+from apps.orgs.application.use_cases.create_org import CreateOrganizationUseCase
+from apps.orgs.application.use_cases.get_org import GetOrganizationUseCase
+from apps.orgs.application.use_cases.list_orgs import ListOrganizationsUseCase
+from apps.orgs.application.use_cases.reinstate_org import ReinstateOrganizationUseCase
+from apps.orgs.application.use_cases.reject_org import RejectOrganizationUseCase
+from apps.orgs.application.use_cases.soft_delete_org import SoftDeleteOrganizationUseCase
+from apps.orgs.application.use_cases.suspend_org import SuspendOrganizationUseCase
+from apps.orgs.application.use_cases.update_org import UpdateOrganizationUseCase
 from apps.orgs.infrastructure.repositories import DjangoOrgMemberRepository, DjangoOrgRepository
 from apps.orgs.presentation.serializers import (
     AddMemberSerializer,
@@ -40,20 +40,20 @@ _IS_AUTH = IsAuthenticated
 _CREATED = created_response
 _UUID = uuid.UUID
 _PAGINATION = StandardPagination
-_CREATE_ORG_UC = CreateOrganisationUseCase
-_GET_ORG_UC = GetOrganisationUseCase
-_LIST_ORGS_UC = ListOrganisationsUseCase
+_CREATE_ORG_UC = CreateOrganizationUseCase
+_GET_ORG_UC = GetOrganizationUseCase
+_LIST_ORGS_UC = ListOrganizationsUseCase
 _ADD_MEMBER_UC = AddOrgMemberUseCase
-_APPROVE_UC = ApproveOrganisationUseCase
-_REJECT_UC = RejectOrganisationUseCase
-_SUSPEND_UC = SuspendOrganisationUseCase
-_REINSTATE_UC = ReinstateOrganisationUseCase
-_SOFT_DELETE_UC = SoftDeleteOrganisationUseCase
+_APPROVE_UC = ApproveOrganizationUseCase
+_REJECT_UC = RejectOrganizationUseCase
+_SUSPEND_UC = SuspendOrganizationUseCase
+_REINSTATE_UC = ReinstateOrganizationUseCase
+_SOFT_DELETE_UC = SoftDeleteOrganizationUseCase
 _ORG_REPO = DjangoOrgRepository
 _MEMBER_REPO = DjangoOrgMemberRepository
 _CREATE_ORG_SER = CreateOrgSerializer
 _ORG_RESP_SER = OrgResponseSerializer
-_UPDATE_ORG_UC = UpdateOrganisationUseCase
+_UPDATE_ORG_UC = UpdateOrganizationUseCase
 _UPDATE_ORG_SER = UpdateOrgSerializer
 _ADD_MEMBER_SER = AddMemberSerializer
 _MEMBER_RESP_SER = OrgMemberResponseSerializer
@@ -85,8 +85,7 @@ class HealthCheckView(APIView):
         tags=["Health"],
         summary="Service health check",
         description=(
-            "Checks connectivity to PostgreSQL, Redis, and RabbitMQ. "
-            "Returns 200 when all dependencies are healthy, 503 when any are down."
+            "Checks connectivity to PostgreSQL, Redis, and RabbitMQ. Returns 200 when all dependencies are healthy, 503 when any are down."
         ),
         auth=[],
         responses={
@@ -173,39 +172,38 @@ class HealthCheckView(APIView):
 
 
 class OrgListCreateView(APIView):
-    """List the authenticated user's organisations or create a new one."""
+    """List the authenticated user's organizations or create a new one."""
 
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="List my organisations",
-        responses={
-            200: OpenApiResponse(
-                description="Paginated org list.", response=_ORG_RESP_SER(many=True)
-            )
-        },
+        tags=["Organizations"],
+        summary="List my organizations",
+        responses={200: OpenApiResponse(description="Paginated org list.", response=_ORG_RESP_SER(many=True))},
     )
     def get(self, request: Request) -> Response:
-        """Return orgs where the authenticated user is an active member."""
-        user_id = _UUID(str(request.user.id))
-        orgs = _LIST_ORGS_UC(_ORG_REPO()).execute(user_id=user_id)
+        """Return user's orgs, or all orgs for staff users."""
+        if getattr(request.user, "is_staff", False):
+            orgs = _ORG_REPO().list_all()
+        else:
+            user_id = _UUID(str(request.user.id))
+            orgs = _LIST_ORGS_UC(_ORG_REPO()).execute(user_id=user_id)
         paginator = _PAGINATION()
         page = paginator.paginate_queryset(orgs, request)
         return paginator.get_paginated_response(_ORG_RESP_SER(page, many=True).data)
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Create an organisation",
+        tags=["Organizations"],
+        summary="Create an organization",
         request=_CREATE_ORG_SER,
         responses={
-            201: OpenApiResponse(description="Organisation created.", response=_ORG_RESP_SER),
+            201: OpenApiResponse(description="Organization created.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
             409: OpenApiResponse(description="Slug already taken."),
         },
     )
     def post(self, request: Request) -> Response:
-        """Create a new organisation; creator is assigned owner membership."""
+        """Create a new organization; creator is assigned owner membership."""
         ser = _CREATE_ORG_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
@@ -231,36 +229,36 @@ class OrgListCreateView(APIView):
 
 
 class OrgDetailView(APIView):
-    """Retrieve or update a single organisation by id."""
+    """Retrieve or update a single organization by id."""
 
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Get organisation",
+        tags=["Organizations"],
+        summary="Get organization",
         responses={
-            200: OpenApiResponse(description="Organisation found.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization found.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
         },
     )
     def get(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Return the organisation matching the given id."""
+        """Return the organization matching the given id."""
         result = _GET_ORG_UC(_ORG_REPO()).execute(org_id=org_id)
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Update organisation",
+        tags=["Organizations"],
+        summary="Update organization",
         request=_UPDATE_ORG_SER,
         responses={
-            200: OpenApiResponse(description="Organisation updated.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization updated.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
         },
     )
     def patch(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Partial-update profile fields on an existing organisation."""
+        """Partial-update profile fields on an existing organization."""
         ser = _UPDATE_ORG_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         result = _UPDATE_ORG_UC(_ORG_REPO()).execute(org_id=org_id, **ser.validated_data)
@@ -268,23 +266,23 @@ class OrgDetailView(APIView):
 
 
 class OrgMembersView(APIView):
-    """Add a member to an organisation."""
+    """Add a member to an organization."""
 
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["Organisations"],
+        tags=["Organizations"],
         summary="Add org member",
         request=_ADD_MEMBER_SER,
         responses={
             201: OpenApiResponse(description="Member added.", response=_MEMBER_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             409: OpenApiResponse(description="User is already a member."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Add the given user as a member of this organisation."""
+        """Add the given user as a member of this organization."""
         ser = _ADD_MEMBER_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
@@ -297,115 +295,125 @@ class OrgMembersView(APIView):
 
 
 class OrgApproveView(APIView):
-    """Approve a pending_review organisation (superadmin only)."""
+    """Approve a pending_review organization (superadmin only)."""
 
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Approve organisation",
+        tags=["Organizations"],
+        summary="Approve organization",
         request=None,
         responses={
-            200: OpenApiResponse(description="Organisation approved.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization approved.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             422: OpenApiResponse(description="Invalid status transition."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Transition the organisation from pending_review to active."""
+        """Transition the organization from pending_review to active."""
         result = _APPROVE_UC(_ORG_REPO()).execute(org_id=org_id)
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgRejectView(APIView):
-    """Reject a pending_review organisation (superadmin only)."""
+    """Reject a pending_review organization (superadmin only)."""
 
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Reject organisation",
+        tags=["Organizations"],
+        summary="Reject organization",
         request=None,
         responses={
-            200: OpenApiResponse(description="Organisation rejected.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization rejected.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             422: OpenApiResponse(description="Invalid status transition."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Transition the organisation from pending_review to suspended."""
+        """Transition the organization from pending_review to suspended."""
         result = _REJECT_UC(_ORG_REPO()).execute(org_id=org_id)
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgSuspendView(APIView):
-    """Suspend an active organisation (superadmin only)."""
+    """Suspend an active organization (superadmin only)."""
 
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Suspend organisation",
+        tags=["Organizations"],
+        summary="Suspend organization",
         request=None,
         responses={
-            200: OpenApiResponse(description="Organisation suspended.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization suspended.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             422: OpenApiResponse(description="Invalid status transition."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Transition the organisation from active to suspended."""
+        """Transition the organization from active to suspended."""
         result = _SUSPEND_UC(_ORG_REPO()).execute(org_id=org_id)
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgReinstateView(APIView):
-    """Reinstate a suspended organisation (superadmin only)."""
+    """Reinstate a suspended organization (superadmin only)."""
 
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Reinstate organisation",
+        tags=["Organizations"],
+        summary="Reinstate organization",
         request=None,
         responses={
-            200: OpenApiResponse(description="Organisation reinstated.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization reinstated.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             422: OpenApiResponse(description="Invalid status transition."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Transition the organisation from suspended to active."""
+        """Transition the organization from suspended to active."""
         result = _REINSTATE_UC(_ORG_REPO()).execute(org_id=org_id)
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgDeleteView(APIView):
-    """Soft-delete an organisation (owner only)."""
+    """Soft-delete an organization. Accepts both DELETE and POST for compatibility."""
 
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Soft-delete organisation",
+        tags=["Organizations"],
+        summary="Soft-delete organization",
         request=None,
         responses={
-            204: OpenApiResponse(description="Organisation deleted."),
+            204: OpenApiResponse(description="Organization deleted."),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
         },
     )
     def delete(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Set deleted_at on the organisation."""
+        """Set deleted_at on the organization."""
         _SOFT_DELETE_UC(_ORG_REPO()).execute(org_id=org_id)
         return Response(status=204)
 
+    @extend_schema(
+        tags=["Organizations"],
+        summary="Soft-delete organization (POST)",
+        request=None,
+        responses={204: OpenApiResponse(description="Organization deleted.")},
+    )
+    def post(self, request: Request, org_id: uuid.UUID) -> Response:
+        """POST alias for delete - used by superadmin."""
+        return self.delete(request, org_id)
 
-# * organisation document endpoints
+
+# * organization document endpoints
 
 
 _DOC_RESP_SER = OrgDocumentResponseSerializer
@@ -413,26 +421,26 @@ _UPLOAD_DOC_SER = UploadOrgDocumentSerializer
 
 
 class OrgDocumentListCreateView(APIView):
-    """List or upload documents for an organisation."""
+    """List or upload documents for an organization."""
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Return all documents belonging to the given organisation."""
+        """Return all documents belonging to the given organization."""
         from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
 
-        docs = OrgDocModel.objects.filter(organisation_id=org_id).order_by("-uploaded_at")
+        docs = OrgDocModel.objects.filter(organization_id=org_id).order_by("-uploaded_at")
         return success_response(_DOC_RESP_SER(docs, many=True).data, request=request)
 
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Upload a new document for the given organisation."""
+        """Upload a new document for the given organization."""
         from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
 
         ser = _UPLOAD_DOC_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
         doc = OrgDocModel.objects.create(
-            organisation_id=org_id,
+            organization_id=org_id,
             doc_type=d["doc_type"],
             file_url=d["file_url"],
             file_name=d["file_name"],
@@ -442,7 +450,7 @@ class OrgDocumentListCreateView(APIView):
 
 
 class OrgDocumentDeleteView(APIView):
-    """Delete a single document from an organisation."""
+    """Delete a single document from an organization."""
 
     permission_classes = [IsAuthenticated]
 
@@ -450,12 +458,12 @@ class OrgDocumentDeleteView(APIView):
         """Remove the specified document."""
         from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
 
-        OrgDocModel.objects.filter(id=doc_id, organisation_id=org_id).delete()
+        OrgDocModel.objects.filter(id=doc_id, organization_id=org_id).delete()
         return Response(status=204)
 
 
 class OrgDocumentUploadView(APIView):
-    """POST /organisations/<org_id>/documents/upload/ - upload a real file to MinIO."""
+    """POST /organizations/<org_id>/documents/upload/ - upload a real file to MinIO."""
 
     permission_classes = [IsAuthenticated]
 
@@ -466,7 +474,7 @@ class OrgDocumentUploadView(APIView):
         responses={201: OpenApiResponse(description="Document uploaded and saved.")},
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Upload file to MinIO and save the document record for the organisation."""
+        """Upload file to MinIO and save the document record for the organization."""
         from apps.common.storage import upload_file
         from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
 
@@ -487,6 +495,13 @@ class OrgDocumentUploadView(APIView):
                 file_obj.name,
                 file_obj.content_type or "application/octet-stream",
             )
+        except ValueError as exc:
+            return error_response(
+                code="ERR_INVALID_FILE_TYPE",
+                message=str(exc),
+                http_status=422,
+                request=request,
+            )
         except Exception as exc:
             return error_response(
                 code="ERR_UPLOAD_FAILED",
@@ -496,7 +511,7 @@ class OrgDocumentUploadView(APIView):
             )
 
         doc = OrgDocModel.objects.create(
-            organisation_id=org_id,
+            organization_id=org_id,
             doc_type=doc_type,
             file_url=file_url,
             file_name=file_obj.name,
@@ -506,7 +521,7 @@ class OrgDocumentUploadView(APIView):
         return created_response(
             {
                 "id": str(doc.id),
-                "org_id": str(doc.organisation_id),
+                "org_id": str(doc.organization_id),
                 "doc_type": doc.doc_type,
                 "file_url": doc.file_url,
                 "file_name": doc.file_name,

@@ -13,12 +13,9 @@ from apps.venues.infrastructure.models import Venue, VenueSpace
 class DjangoVenueRepository(IVenueRepository):
     """PostgreSQL-backed venue repository."""
 
-    def list_by_org(self, organisation_id: uuid.UUID) -> list[VenueEntity]:
-        """Return all non-deleted venues for an organisation."""
-        return [
-            v.to_entity()
-            for v in Venue.objects.filter(organisation_id=organisation_id, deleted_at__isnull=True)
-        ]
+    def list_by_org(self, organization_id: uuid.UUID) -> list[VenueEntity]:
+        """Return all non-deleted venues for an organization."""
+        return [v.to_entity() for v in Venue.objects.filter(organization_id=organization_id, deleted_at__isnull=True)]
 
     def get_by_id(self, venue_id: uuid.UUID) -> VenueEntity:
         """Raise VenueNotFoundError if the venue is not found."""

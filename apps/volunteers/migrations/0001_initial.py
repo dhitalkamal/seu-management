@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("event_id", models.UUIDField()),
-                ("organisation_id", models.UUIDField(blank=True, null=True)),
+                ("organization_id", models.UUIDField(blank=True, null=True)),
                 ("name", models.CharField(max_length=255)),
                 ("description", models.TextField(blank=True)),
                 ("capacity", models.PositiveIntegerField(default=1)),

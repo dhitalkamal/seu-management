@@ -130,7 +130,7 @@ class OrgAnalyticsView(APIView):
         from django.db.models import Count
         from django.db.models.functions import TruncMonth
 
-        from apps.orgs.infrastructure.models import Organisation
+        from apps.orgs.infrastructure.models import Organization
         from apps.orgs.infrastructure.support_models import SupportTicket
 
         now = datetime.now(timezone.utc)
@@ -138,18 +138,18 @@ class OrgAnalyticsView(APIView):
         d60 = now - timedelta(days=60)
         d365 = now - timedelta(days=365)
 
-        total = Organisation.objects.count()
-        active = Organisation.objects.filter(status="active").count()
-        pending = Organisation.objects.filter(status="pending_review").count()
-        suspended = Organisation.objects.filter(status="suspended").count()
-        verified = Organisation.objects.filter(is_verified=True).count()
+        total = Organization.objects.count()
+        active = Organization.objects.filter(status="active").count()
+        pending = Organization.objects.filter(status="pending_review").count()
+        suspended = Organization.objects.filter(status="suspended").count()
+        verified = Organization.objects.filter(is_verified=True).count()
 
-        new_30d = Organisation.objects.filter(created_at__gte=d30).count()
-        prev_30d = Organisation.objects.filter(created_at__gte=d60, created_at__lt=d30).count()
+        new_30d = Organization.objects.filter(created_at__gte=d30).count()
+        prev_30d = Organization.objects.filter(created_at__gte=d60, created_at__lt=d30).count()
 
         plan_breakdown = {}
-        for plan in Organisation.Plan.values:
-            count = Organisation.objects.filter(plan=plan).count()
+        for plan in Organization.Plan.values:
+            count = Organization.objects.filter(plan=plan).count()
             if count > 0:
                 plan_breakdown[plan] = count
 
@@ -157,7 +157,7 @@ class OrgAnalyticsView(APIView):
         escalated_tickets = SupportTicket.objects.filter(status="escalated").count()
 
         monthly_qs = (
-            Organisation.objects.filter(created_at__gte=d365)
+            Organization.objects.filter(created_at__gte=d365)
             .annotate(month=TruncMonth("created_at"))
             .values("month")
             .annotate(count=Count("id"))
@@ -167,24 +167,28 @@ class OrgAnalyticsView(APIView):
         org_monthly_series = []
         for i in range(11, -1, -1):
             from datetime import timedelta as td
+
             dt = now.replace(day=1) - td(days=30 * i)
             key = dt.strftime("%Y-%m")
             org_monthly_series.append(month_map.get(key, 0))
 
-        return success_response({
-            "orgs": {
-                "total": total,
-                "active": active,
-                "pending": pending,
-                "suspended": suspended,
-                "verified": verified,
-                "new_30d": new_30d,
-                "prev_30d": prev_30d,
-                "plan_breakdown": plan_breakdown,
-                "monthly_series": org_monthly_series,
+        return success_response(
+            {
+                "orgs": {
+                    "total": total,
+                    "active": active,
+                    "pending": pending,
+                    "suspended": suspended,
+                    "verified": verified,
+                    "new_30d": new_30d,
+                    "prev_30d": prev_30d,
+                    "plan_breakdown": plan_breakdown,
+                    "monthly_series": org_monthly_series,
+                },
+                "tickets": {
+                    "open": open_tickets,
+                    "escalated": escalated_tickets,
+                },
             },
-            "tickets": {
-                "open": open_tickets,
-                "escalated": escalated_tickets,
-            },
-        }, request=request)
+            request=request,
+        )

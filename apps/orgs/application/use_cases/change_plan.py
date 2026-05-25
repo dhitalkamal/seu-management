@@ -1,4 +1,4 @@
-"""Use case: change an organisation's subscription plan."""
+"""Use case: change an organization's subscription plan."""
 
 from __future__ import annotations
 
@@ -6,16 +6,16 @@ import uuid
 from datetime import datetime
 
 from apps.orgs.domain.entities import OrgEntity
-from apps.orgs.domain.repositories import IOrganisationRepository
+from apps.orgs.domain.repositories import IOrganizationRepository
 
-# ! valid plan names — must stay in sync with Organisation.Plan choices
+# ! valid plan names — must stay in sync with Organization.Plan choices
 VALID_PLANS: frozenset[str] = frozenset({"free", "starter", "pro", "ngo", "enterprise"})
 
 
 class ChangePlanUseCase:
-    """Update an organisation's subscription plan and expiry date."""
+    """Update an organization's subscription plan and expiry date."""
 
-    def __init__(self, org_repo: IOrganisationRepository) -> None:
+    def __init__(self, org_repo: IOrganizationRepository) -> None:
         self._orgs = org_repo
 
     def execute(
@@ -31,7 +31,7 @@ class ChangePlanUseCase:
         Called by the subscription webhook consumer when a payment is confirmed,
         or by a superadmin manually assigning a plan.
 
-        @param org_id - the organisation to update
+        @param org_id - the organization to update
         @param plan - one of free, starter, pro, ngo, enterprise
         @param plan_expires_at - when the current billing period ends (None for free/ngo)
         @raises ValueError if the plan name is invalid

@@ -1,4 +1,4 @@
-"""Add profile fields to Organisation and create OrgDocument table."""
+"""Add profile fields to Organization and create OrgDocument table."""
 
 from __future__ import annotations
 
@@ -9,40 +9,40 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    """Extend Organisation with contact / social fields and add org_document table."""
+    """Extend Organization with contact / social fields and add org_document table."""
 
     dependencies = [
         ("orgs", "0004_add_support_ticket"),
     ]
 
     operations = [
-        # * ── New fields on Organisation ────────────────────────────────
+        # * ── New fields on Organization ────────────────────────────────
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="phone",
             field=models.CharField(max_length=20, blank=True, default=""),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="address",
             field=models.CharField(max_length=500, blank=True, default=""),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="city",
             field=models.CharField(max_length=100, blank=True, default=""),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="country",
             field=models.CharField(max_length=100, blank=True, default=""),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="org_type",
             field=models.CharField(
                 max_length=30,
@@ -58,25 +58,25 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="facebook_url",
             field=models.URLField(blank=True, default=""),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="twitter_url",
             field=models.URLField(blank=True, default=""),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="instagram_url",
             field=models.URLField(blank=True, default=""),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="linkedin_url",
             field=models.URLField(blank=True, default=""),
             preserve_default=False,
@@ -112,11 +112,11 @@ class Migration(migrations.Migration):
                 ("file_size", models.PositiveIntegerField(default=0)),
                 ("uploaded_at", models.DateTimeField(auto_now_add=True)),
                 (
-                    "organisation",
+                    "organization",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="documents",
-                        to="orgs.organisation",
+                        to="orgs.organization",
                     ),
                 ),
             ],

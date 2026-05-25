@@ -54,14 +54,10 @@ class DjangoCommunityRepository(ICommunityRepository):
 class DjangoCommunityMemberRepository(ICommunityMemberRepository):
     """PostgreSQL-backed community membership repository."""
 
-    def get_membership(
-        self, community_id: uuid.UUID, user_id: uuid.UUID
-    ) -> CommunityMemberEntity | None:
+    def get_membership(self, community_id: uuid.UUID, user_id: uuid.UUID) -> CommunityMemberEntity | None:
         """Return the membership if it exists, else None."""
         try:
-            return CommunityMember.objects.get(
-                community_id=community_id, user_id=user_id
-            ).to_entity()
+            return CommunityMember.objects.get(community_id=community_id, user_id=user_id).to_entity()
         except CommunityMember.DoesNotExist:
             return None
 
@@ -79,10 +75,7 @@ class DjangoCommunityPostRepository(ICommunityPostRepository):
 
     def list_by_community(self, community_id: uuid.UUID) -> list[CommunityPostEntity]:
         """Return all published posts for a community."""
-        return [
-            p.to_entity()
-            for p in CommunityPost.objects.filter(community_id=community_id, status="published")
-        ]
+        return [p.to_entity() for p in CommunityPost.objects.filter(community_id=community_id, status="published")]
 
     def get_by_id(self, post_id: uuid.UUID) -> CommunityPostEntity:
         """Raise CommunityPostNotFoundError if not found."""

@@ -8,8 +8,8 @@ from abc import ABC, abstractmethod
 from apps.orgs.domain.entities import OrgEntity, OrgMemberEntity
 
 
-class IOrganisationRepository(ABC):
-    """Persistence contract for Organisation aggregates."""
+class IOrganizationRepository(ABC):
+    """Persistence contract for Organization aggregates."""
 
     @abstractmethod
     def create(self, entity: OrgEntity) -> OrgEntity: ...
@@ -25,6 +25,9 @@ class IOrganisationRepository(ABC):
 
     @abstractmethod
     def list_by_user(self, user_id: uuid.UUID) -> list[OrgEntity]: ...
+
+    @abstractmethod
+    def list_all(self) -> list[OrgEntity]: ...
 
 
 class IOrgMemberRepository(ABC):

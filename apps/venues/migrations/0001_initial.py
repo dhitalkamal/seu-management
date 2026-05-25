@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                         default=uuid.uuid4, editable=False, primary_key=True, serialize=False
                     ),
                 ),
-                ("organisation_id", models.UUIDField()),
+                ("organization_id", models.UUIDField()),
                 ("created_by", models.UUIDField()),
                 ("name", models.CharField(max_length=255)),
                 ("address", models.CharField(max_length=500)),

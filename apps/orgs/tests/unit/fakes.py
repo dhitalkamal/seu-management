@@ -8,7 +8,7 @@ from typing import Sequence
 
 from apps.orgs.domain.entities import OrgEntity, OrgMemberEntity
 from apps.orgs.domain.exceptions import OrgNotFoundError
-from apps.orgs.domain.repositories import IOrganisationRepository, IOrgMemberRepository
+from apps.orgs.domain.repositories import IOrganizationRepository, IOrgMemberRepository
 
 
 def _now() -> datetime:
@@ -21,7 +21,7 @@ def make_org(**kwargs: object) -> OrgEntity:
     defaults: dict = {
         "id": uuid.uuid4(),
         "created_by": uuid.uuid4(),
-        "name": "Test Organisation",
+        "name": "Test Organization",
         "slug": "test-org",
         "contact_email": "org@example.com",
         "status": "pending_review",
@@ -37,8 +37,8 @@ def make_org(**kwargs: object) -> OrgEntity:
     return OrgEntity(**defaults)  # type: ignore[arg-type]
 
 
-class FakeOrgRepository(IOrganisationRepository):
-    """In-memory organisation store."""
+class FakeOrgRepository(IOrganizationRepository):
+    """In-memory organization store."""
 
     def __init__(self, orgs: Sequence[OrgEntity] | None = None) -> None:
         self._store: dict[uuid.UUID, OrgEntity] = {o.id: o for o in (orgs or [])}
@@ -52,7 +52,7 @@ class FakeOrgRepository(IOrganisationRepository):
         """Raise OrgNotFoundError if absent or soft-deleted."""
         entity = self._store.get(org_id)
         if entity is None or entity.deleted_at is not None:
-            raise OrgNotFoundError("Organisation not found.")
+            raise OrgNotFoundError("Organization not found.")
         return entity
 
     def get_by_slug(self, slug: str) -> OrgEntity | None:
@@ -71,6 +71,10 @@ class FakeOrgRepository(IOrganisationRepository):
         """Return all non-deleted orgs in the store."""
         return [o for o in self._store.values() if o.deleted_at is None]
 
+    def list_all(self) -> list[OrgEntity]:
+        """Return all non-deleted orgs."""
+        return [o for o in self._store.values() if o.deleted_at is None]
+
 
 class FakeOrgMemberRepository(IOrgMemberRepository):
     """In-memory org member store."""
@@ -85,7 +89,4 @@ class FakeOrgMemberRepository(IOrgMemberRepository):
 
     def exists(self, org_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """True if an active membership exists for this (org, user) pair."""
-        return any(
-            m.organisation_id == org_id and m.user_id == user_id and m.is_active
-            for m in self._store.values()
-        )
+        return any(m.organization_id == org_id and m.user_id == user_id and m.is_active for m in self._store.values())

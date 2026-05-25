@@ -9,7 +9,7 @@ from datetime import datetime
 
 @dataclass(slots=True)
 class OrgEntity:
-    """A platform organisation created by an organiser."""
+    """A platform organization created by an organiser."""
 
     id: uuid.UUID
     created_by: uuid.UUID
@@ -40,10 +40,10 @@ class OrgEntity:
 
 @dataclass(slots=True)
 class OrgMemberEntity:
-    """A single membership record linking a user to an organisation."""
+    """A single membership record linking a user to an organization."""
 
     id: uuid.UUID
-    organisation_id: uuid.UUID
+    organization_id: uuid.UUID
     user_id: uuid.UUID
     role: str
     is_active: bool

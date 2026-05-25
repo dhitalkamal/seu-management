@@ -17,7 +17,7 @@ class VolunteerRole(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     event_id = models.UUIDField()
-    organisation_id = models.UUIDField(null=True, blank=True)
+    organization_id = models.UUIDField(null=True, blank=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     capacity = models.PositiveIntegerField(default=1)
@@ -33,7 +33,7 @@ class VolunteerRole(models.Model):
             capacity=self.capacity,
             is_active=self.is_active,
             created_at=self.created_at,
-            organisation_id=self.organisation_id,
+            organization_id=self.organization_id,
             description=self.description,
         )
 
@@ -43,7 +43,7 @@ class VolunteerRole(models.Model):
         return cls(
             id=entity.id,
             event_id=entity.event_id,
-            organisation_id=entity.organisation_id,
+            organization_id=entity.organization_id,
             name=entity.name,
             description=entity.description,
             capacity=entity.capacity,
@@ -70,9 +70,7 @@ class VolunteerApplication(models.Model):
         ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    volunteer_role = models.ForeignKey(
-        VolunteerRole, on_delete=models.CASCADE, related_name="applications"
-    )
+    volunteer_role = models.ForeignKey(VolunteerRole, on_delete=models.CASCADE, related_name="applications")
     user_id = models.UUIDField()
     event_id = models.UUIDField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)

@@ -23,7 +23,7 @@ class CreateCommunityUseCase:
         name: str,
         slug: str,
         privacy: str,
-        organisation_id: uuid.UUID | None = None,
+        organization_id: uuid.UUID | None = None,
         description: str = "",
     ) -> CommunityEntity:
         """Validate slug uniqueness and persist the new community."""
@@ -39,7 +39,7 @@ class CreateCommunityUseCase:
             privacy=privacy,
             member_count=0,
             created_at=now,
-            organisation_id=organisation_id,
+            organization_id=organization_id,
             description=description,
         )
         self._repo.create(community)

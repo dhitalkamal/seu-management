@@ -1,17 +1,17 @@
-"""Use case: update an organisation's editable profile fields."""
+"""Use case: update an organization's editable profile fields."""
 
 from __future__ import annotations
 
 import uuid
 
 from apps.orgs.domain.entities import OrgEntity
-from apps.orgs.domain.repositories import IOrganisationRepository
+from apps.orgs.domain.repositories import IOrganizationRepository
 
 
-class UpdateOrganisationUseCase:
-    """Apply partial updates to an existing organisation's profile fields."""
+class UpdateOrganizationUseCase:
+    """Apply partial updates to an existing organization's profile fields."""
 
-    def __init__(self, org_repo: IOrganisationRepository) -> None:
+    def __init__(self, org_repo: IOrganizationRepository) -> None:
         self._orgs = org_repo
 
     def execute(
@@ -36,9 +36,20 @@ class UpdateOrganisationUseCase:
 
         # ! only allow profile fields — never status, plan, or is_verified here
         allowed = {
-            "name", "description", "contact_email", "website", "logo_url",
-            "phone", "address", "city", "country", "org_type",
-            "facebook_url", "twitter_url", "instagram_url", "linkedin_url",
+            "name",
+            "description",
+            "contact_email",
+            "website",
+            "logo_url",
+            "phone",
+            "address",
+            "city",
+            "country",
+            "org_type",
+            "facebook_url",
+            "twitter_url",
+            "instagram_url",
+            "linkedin_url",
         }
 
         # ! critical fields — changing these on an active org resets verification

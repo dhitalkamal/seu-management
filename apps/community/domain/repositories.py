@@ -40,9 +40,7 @@ class ICommunityMemberRepository(ABC):
     """Persistence interface for community memberships."""
 
     @abstractmethod
-    def get_membership(
-        self, community_id: uuid.UUID, user_id: uuid.UUID
-    ) -> CommunityMemberEntity | None:
+    def get_membership(self, community_id: uuid.UUID, user_id: uuid.UUID) -> CommunityMemberEntity | None:
         """Return the membership if it exists, else None."""
 
     @abstractmethod

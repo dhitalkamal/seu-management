@@ -57,6 +57,7 @@ class VolunteerApplication(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
         APPROVED = "approved", "Approved"
+        CONFIRMED = "confirmed", "Confirmed"
         REJECTED = "rejected", "Rejected"
         CANCELLED = "cancelled", "Cancelled"
 
@@ -70,9 +71,7 @@ class VolunteerApplication(models.Model):
         ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    volunteer_role = models.ForeignKey(
-        VolunteerRole, on_delete=models.CASCADE, related_name="applications"
-    )
+    volunteer_role = models.ForeignKey(VolunteerRole, on_delete=models.CASCADE, related_name="applications")
     user_id = models.UUIDField()
     event_id = models.UUIDField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)

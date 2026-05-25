@@ -44,6 +44,7 @@ class VolunteerApplicationResponseSerializer(serializers.Serializer):
     status = serializers.CharField()
     check_in_at = serializers.DateTimeField(allow_null=True)
     check_out_at = serializers.DateTimeField(allow_null=True)
+    hours_worked = serializers.FloatField(allow_null=True)
     rating = serializers.IntegerField(allow_null=True)
     certificate_issued = serializers.BooleanField()
     created_at = serializers.DateTimeField()

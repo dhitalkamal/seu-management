@@ -14,6 +14,8 @@ from apps.common.api.responses import created_response, success_response
 from apps.volunteers.application.use_cases.apply_to_role import ApplyToVolunteerRoleUseCase
 from apps.volunteers.application.use_cases.approve_application import ApproveApplicationUseCase
 from apps.volunteers.application.use_cases.cancel_application import CancelApplicationUseCase
+from apps.volunteers.application.use_cases.checkin_volunteer import CheckInVolunteerUseCase
+from apps.volunteers.application.use_cases.checkout_volunteer import CheckOutVolunteerUseCase
 from apps.volunteers.application.use_cases.create_role import CreateVolunteerRoleUseCase
 from apps.volunteers.application.use_cases.list_applications import ListApplicationsUseCase
 from apps.volunteers.application.use_cases.reject_application import RejectApplicationUseCase
@@ -37,6 +39,8 @@ _APPROVE_UC = ApproveApplicationUseCase
 _REJECT_UC = RejectApplicationUseCase
 _CANCEL_APP_UC = CancelApplicationUseCase
 _LIST_APPS_UC = ListApplicationsUseCase
+_CHECKIN_UC = CheckInVolunteerUseCase
+_CHECKOUT_UC = CheckOutVolunteerUseCase
 _ROLE_REPO = DjangoVolunteerRoleRepository
 _APP_REPO = DjangoVolunteerApplicationRepository
 _CREATE_ROLE_SER = CreateRoleSerializer
@@ -182,3 +186,49 @@ class VolunteerApplicationCancelView(APIView):
         """Set application status to cancelled."""
         result = _CANCEL_APP_UC(_APP_REPO()).execute(application_id=application_id)
         return success_response(_APP_RESP_SER(result).data, request=request)
+
+
+class VolunteerCheckInView(APIView):
+    """Record a volunteer's physical arrival at the event."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Volunteers"],
+        summary="Check in volunteer",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Volunteer checked in.", response=_APP_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Application not found."),
+            409: OpenApiResponse(description="Already checked in or invalid status."),
+        },
+    )
+    def post(self, request: Request, application_id: uuid.UUID) -> Response:
+        """Set check_in_at and transition status to confirmed."""
+        _CHECKIN_UC(_APP_REPO()).execute(application_id=application_id)
+        app = _APP_REPO().get_by_id(application_id)
+        return success_response(_APP_RESP_SER(app).data, request=request)
+
+
+class VolunteerCheckOutView(APIView):
+    """Record a volunteer's departure and compute hours worked."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Volunteers"],
+        summary="Check out volunteer",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Volunteer checked out.", response=_APP_RESP_SER),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            404: OpenApiResponse(description="Application not found."),
+            409: OpenApiResponse(description="Not yet checked in or already checked out."),
+        },
+    )
+    def post(self, request: Request, application_id: uuid.UUID) -> Response:
+        """Set check_out_at."""
+        _CHECKOUT_UC(_APP_REPO()).execute(application_id=application_id)
+        app = _APP_REPO().get_by_id(application_id)
+        return success_response(_APP_RESP_SER(app).data, request=request)

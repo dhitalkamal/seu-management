@@ -19,7 +19,11 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "django-stubs>=6.0.4",
+    "djangorestframework-stubs>=3.17.0",
+    "mypy>=2.1.0",
     "pytest>=8.0",
+    "pytest-cov>=7.1.0",
     "pytest-django>=4.8",
     "ruff>=0.9",
 ]
@@ -37,3 +41,38 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+ignore_missing_imports = true
+exclude = ["migrations/", "tests/"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.development"
+
+[[tool.mypy.overrides]]
+module = [
+    "apps.volunteers.infrastructure.*",
+    "apps.volunteers.presentation.*",
+    "apps.venues.infrastructure.*",
+    "apps.venues.presentation.*",
+    "apps.orgs.infrastructure.*",
+    "apps.orgs.presentation.*",
+    "apps.orgs.management.*",
+    "apps.community.infrastructure.*",
+    "apps.community.presentation.*",
+    "apps.marketing.infrastructure.*",
+    "apps.marketing.presentation.*",
+    "apps.common.*",
+    "config.*",
+]
+ignore_errors = true
+
+# pre-existing: orgs ticket repos are typed as `object`; suppress until fixed
+[[tool.mypy.overrides]]
+module = [
+    "apps.orgs.application.use_cases.create_ticket",
+    "apps.orgs.application.use_cases.list_tickets",
+    "apps.orgs.application.use_cases.update_ticket_status",
+]
+ignore_errors = true

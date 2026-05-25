@@ -36,3 +36,11 @@ class VolunteerApplicationEntity:
     check_out_at: datetime | None = None
     rating: int | None = None
     certificate_issued: bool = False
+
+    @property
+    def hours_worked(self) -> float | None:
+        """Elapsed volunteer hours; None until the volunteer has checked out."""
+        if self.check_in_at is None or self.check_out_at is None:
+            return None
+        delta = self.check_out_at - self.check_in_at
+        return round(delta.total_seconds() / 3600, 2)

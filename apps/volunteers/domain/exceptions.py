@@ -31,3 +31,24 @@ class ApplicationNotFoundError(DomainError):
 
     http_status = 404
     code = "ERR_VOLUNTEER_APPLICATION_NOT_FOUND"
+
+
+class InvalidStatusTransitionError(DomainError):
+    """The requested status change is not permitted from the current state."""
+
+    http_status = 409
+    code = "ERR_VOLUNTEER_INVALID_STATUS_TRANSITION"
+
+
+class AlreadyCheckedInError(DomainError):
+    """The volunteer has already checked in to this event."""
+
+    http_status = 409
+    code = "ERR_VOLUNTEER_ALREADY_CHECKED_IN"
+
+
+class NotCheckedInError(DomainError):
+    """Cannot check out because the volunteer has not yet checked in."""
+
+    http_status = 409
+    code = "ERR_VOLUNTEER_NOT_CHECKED_IN"

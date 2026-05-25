@@ -113,6 +113,10 @@ class FakeCommunityMemberRepository(ICommunityMemberRepository):
         """Store the membership."""
         self._store[(member.community_id, member.user_id)] = member
 
+    def delete(self, community_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """Remove the membership; silently ignore if absent (use case guards first)."""
+        self._store.pop((community_id, user_id), None)
+
     def list_by_community(self, community_id: uuid.UUID) -> list[CommunityMemberEntity]:
         """Return all members of a community."""
         return [m for m in self._store.values() if m.community_id == community_id]

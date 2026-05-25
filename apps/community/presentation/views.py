@@ -18,6 +18,7 @@ from apps.community.application.use_cases.delete_comment import DeleteCommentUse
 from apps.community.application.use_cases.delete_post import DeletePostUseCase
 from apps.community.application.use_cases.get_community import GetCommunityUseCase
 from apps.community.application.use_cases.join_community import JoinCommunityUseCase
+from apps.community.application.use_cases.leave_community import LeaveCommunityUseCase
 from apps.community.application.use_cases.list_comments import ListCommentsUseCase
 from apps.community.application.use_cases.list_communities import ListCommunitiesUseCase
 from apps.community.application.use_cases.list_posts import ListPostsUseCase
@@ -31,7 +32,9 @@ from apps.community.domain.exceptions import (
     CommentEditWindowExpiredError,
     CommentNotFoundError,
     CommunityNotFoundError,
+    CommunityOwnerCannotLeaveError,
     CommunityPostNotFoundError,
+    NotMemberError,
     ReactionNotFoundError,
     SlugAlreadyExistsError,
 )
@@ -62,6 +65,7 @@ _LIST_UC = ListCommunitiesUseCase
 _CREATE_UC = CreateCommunityUseCase
 _GET_UC = GetCommunityUseCase
 _JOIN_UC = JoinCommunityUseCase
+_LEAVE_UC = LeaveCommunityUseCase
 _LIST_POSTS_UC = ListPostsUseCase
 _CREATE_POST_UC = CreatePostUseCase
 _DELETE_POST_UC = DeletePostUseCase
@@ -192,6 +196,51 @@ class CommunityJoinView(APIView):
                 request=request,
             )
         return _CREATED({"joined": True}, request=request)
+
+
+class CommunityLeaveView(APIView):
+    """DELETE /communities/{community_id}/leave/"""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Community"],
+        summary="Leave community",
+        responses={
+            204: OpenApiResponse(description="Left successfully."),
+            400: OpenApiResponse(description="Owner cannot leave without transferring ownership."),
+            404: OpenApiResponse(description="Community not found or user is not a member."),
+        },
+    )
+    def delete(self, request: Request, community_id: uuid.UUID) -> Response:
+        """Remove the authenticated user from the community."""
+        try:
+            _LEAVE_UC(_REPO(), _MEMBER_REPO()).execute(
+                community_id=community_id,
+                user_id=uuid.UUID(str(request.user.id)),
+            )
+        except CommunityNotFoundError as exc:
+            return error_response(
+                code="ERR_COMMUNITY_NOT_FOUND",
+                message=str(exc),
+                http_status=404,
+                request=request,
+            )
+        except CommunityOwnerCannotLeaveError as exc:
+            return error_response(
+                code="ERR_COMMUNITY_OWNER_CANNOT_LEAVE",
+                message=str(exc),
+                http_status=400,
+                request=request,
+            )
+        except NotMemberError as exc:
+            return error_response(
+                code="ERR_COMMUNITY_NOT_MEMBER",
+                message=str(exc),
+                http_status=404,
+                request=request,
+            )
+        return Response(status=204)
 
 
 class CommunityPostListCreateView(APIView):

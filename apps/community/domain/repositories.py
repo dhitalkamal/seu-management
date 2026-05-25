@@ -51,6 +51,10 @@ class ICommunityMemberRepository(ABC):
         """Persist a new membership record."""
 
     @abstractmethod
+    def delete(self, community_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """Remove a membership record."""
+
+    @abstractmethod
     def list_by_community(self, community_id: uuid.UUID) -> list[CommunityMemberEntity]:
         """Return all members of a community."""
 

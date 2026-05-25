@@ -8,6 +8,7 @@ from .views import (
     CommentReactionView,
     CommunityDetailView,
     CommunityJoinView,
+    CommunityLeaveView,
     CommunityListCreateView,
     CommunityPostDetailView,
     CommunityPostListCreateView,
@@ -21,6 +22,7 @@ urlpatterns: list[URLPattern] = [
     path("", CommunityListCreateView.as_view(), name="community-list-create"),
     path("<uuid:community_id>/", CommunityDetailView.as_view(), name="community-detail"),
     path("<uuid:community_id>/join/", CommunityJoinView.as_view(), name="community-join"),
+    path("<uuid:community_id>/leave/", CommunityLeaveView.as_view(), name="community-leave"),
     path(
         "<uuid:community_id>/posts/",
         CommunityPostListCreateView.as_view(),

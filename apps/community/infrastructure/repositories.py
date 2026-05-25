@@ -17,6 +17,7 @@ from apps.community.domain.exceptions import (
     CommentReactionNotFoundError,
     CommunityNotFoundError,
     CommunityPostNotFoundError,
+    NotMemberError,
     ReactionNotFoundError,
 )
 from apps.community.domain.repositories import (
@@ -83,6 +84,12 @@ class DjangoCommunityMemberRepository(ICommunityMemberRepository):
     def create(self, member: CommunityMemberEntity) -> None:
         """Persist a new membership record."""
         CommunityMember.from_entity(member).save()
+
+    def delete(self, community_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """Remove the membership; raise NotMemberError if not found."""
+        deleted, _ = CommunityMember.objects.filter(community_id=community_id, user_id=user_id).delete()
+        if not deleted:
+            raise NotMemberError(f"User {user_id} is not a member of community {community_id}.")
 
     def list_by_community(self, community_id: uuid.UUID) -> list[CommunityMemberEntity]:
         """Return all members of a community."""

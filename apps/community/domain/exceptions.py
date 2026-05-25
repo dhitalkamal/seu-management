@@ -33,3 +33,11 @@ class CommentEditWindowExpiredError(Exception):
 
 class CommentReactionNotFoundError(Exception):
     """Raised when a user tries to remove a comment reaction that does not exist."""
+
+
+class NotMemberError(Exception):
+    """Raised when a user tries to leave a community they have not joined."""
+
+
+class CommunityOwnerCannotLeaveError(Exception):
+    """Raised when the community owner tries to leave; ownership transfer is required first."""

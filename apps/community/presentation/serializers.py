@@ -68,3 +68,48 @@ class PostReactionResponseSerializer(serializers.Serializer):
     user_id = serializers.UUIDField()
     reaction_type = serializers.CharField()
     created_at = serializers.DateTimeField()
+
+
+_REACTION_CHOICES = ["like", "love", "fire", "laugh", "sad", "angry"]
+
+
+class CreateCommentSerializer(serializers.Serializer):
+    """Request body for creating a comment or reply."""
+
+    content = serializers.CharField()
+    parent_id = serializers.UUIDField(required=False, allow_null=True, default=None)
+
+
+class UpdateCommentSerializer(serializers.Serializer):
+    """Request body for updating a comment."""
+
+    content = serializers.CharField()
+
+
+class PostCommentResponseSerializer(serializers.Serializer):
+    """Public shape of a comment resource."""
+
+    id = serializers.UUIDField()
+    post_id = serializers.UUIDField()
+    user_id = serializers.UUIDField()
+    content = serializers.CharField()
+    is_hidden = serializers.BooleanField()
+    parent_id = serializers.UUIDField(allow_null=True)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+
+
+class ReactToCommentSerializer(serializers.Serializer):
+    """Request body for adding or replacing a comment reaction."""
+
+    reaction_type = serializers.ChoiceField(choices=_REACTION_CHOICES)
+
+
+class CommentReactionResponseSerializer(serializers.Serializer):
+    """Public shape of a comment reaction resource."""
+
+    id = serializers.UUIDField()
+    comment_id = serializers.UUIDField()
+    user_id = serializers.UUIDField()
+    reaction_type = serializers.CharField()
+    created_at = serializers.DateTimeField()

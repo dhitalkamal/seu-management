@@ -62,3 +62,29 @@ class PostReactionEntity:
     user_id: uuid.UUID
     reaction_type: str
     created_at: datetime
+
+
+@dataclass(slots=True)
+class PostCommentEntity:
+    """A comment left on a community post, optionally nested under a parent."""
+
+    id: uuid.UUID
+    post_id: uuid.UUID
+    user_id: uuid.UUID
+    content: str
+    is_hidden: bool
+    created_at: datetime
+    updated_at: datetime
+    parent_id: uuid.UUID | None = None
+    deleted_at: datetime | None = None
+
+
+@dataclass(slots=True)
+class CommentReactionEntity:
+    """A single user reaction to a comment."""
+
+    id: uuid.UUID
+    comment_id: uuid.UUID
+    user_id: uuid.UUID
+    reaction_type: str
+    created_at: datetime

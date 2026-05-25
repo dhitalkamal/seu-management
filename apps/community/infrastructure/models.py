@@ -7,9 +7,11 @@ import uuid
 from django.db import models
 
 from apps.community.domain.entities import (
+    CommentReactionEntity,
     CommunityEntity,
     CommunityMemberEntity,
     CommunityPostEntity,
+    PostCommentEntity,
     PostReactionEntity,
 )
 
@@ -208,6 +210,92 @@ class CommunityPostReaction(models.Model):
         return cls(
             id=entity.id,
             post_id=entity.post_id,
+            user_id=entity.user_id,
+            reaction_type=entity.reaction_type,
+        )
+
+
+class PostComment(models.Model):
+    """A comment on a community post, optionally nested under a parent comment."""
+
+    class Meta:
+        db_table = '"community"."post_comment"'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    post = models.ForeignKey(CommunityPost, on_delete=models.CASCADE, related_name="comments")
+    user_id = models.UUIDField()
+    parent = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True, related_name="replies")
+    content = models.TextField()
+    is_hidden = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def to_entity(self) -> PostCommentEntity:
+        """Map this ORM row to a pure-Python PostCommentEntity."""
+        return PostCommentEntity(
+            id=self.id,
+            post_id=self.post_id,
+            user_id=self.user_id,
+            content=self.content,
+            is_hidden=self.is_hidden,
+            parent_id=self.parent_id,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            deleted_at=self.deleted_at,
+        )
+
+    @classmethod
+    def from_entity(cls, entity: PostCommentEntity) -> "PostComment":
+        """Build an unsaved ORM instance from a PostCommentEntity."""
+        return cls(
+            id=entity.id,
+            post_id=entity.post_id,
+            user_id=entity.user_id,
+            parent_id=entity.parent_id,
+            content=entity.content,
+            is_hidden=entity.is_hidden,
+            deleted_at=entity.deleted_at,
+        )
+
+
+class CommentReaction(models.Model):
+    """A single user reaction on a comment."""
+
+    class ReactionType(models.TextChoices):
+        LIKE = "like", "Like"
+        LOVE = "love", "Love"
+        FIRE = "fire", "Fire"
+        LAUGH = "laugh", "Laugh"
+        SAD = "sad", "Sad"
+        ANGRY = "angry", "Angry"
+
+    class Meta:
+        db_table = '"community"."comment_reaction"'
+        constraints = [models.UniqueConstraint(fields=["comment", "user_id"], name="unique_comment_reaction_per_user")]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    comment = models.ForeignKey(PostComment, on_delete=models.CASCADE, related_name="reactions")
+    user_id = models.UUIDField()
+    reaction_type = models.CharField(max_length=10, choices=ReactionType.choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def to_entity(self) -> CommentReactionEntity:
+        """Map this ORM row to a pure-Python CommentReactionEntity."""
+        return CommentReactionEntity(
+            id=self.id,
+            comment_id=self.comment_id,
+            user_id=self.user_id,
+            reaction_type=self.reaction_type,
+            created_at=self.created_at,
+        )
+
+    @classmethod
+    def from_entity(cls, entity: CommentReactionEntity) -> "CommentReaction":
+        """Build an unsaved ORM instance from a CommentReactionEntity."""
+        return cls(
+            id=entity.id,
+            comment_id=entity.comment_id,
             user_id=entity.user_id,
             reaction_type=entity.reaction_type,
         )

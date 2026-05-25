@@ -5,19 +5,36 @@ from __future__ import annotations
 import uuid
 
 from apps.community.domain.entities import (
+    CommentReactionEntity,
     CommunityEntity,
     CommunityMemberEntity,
     CommunityPostEntity,
+    PostCommentEntity,
     PostReactionEntity,
 )
-from apps.community.domain.exceptions import CommunityNotFoundError, CommunityPostNotFoundError, ReactionNotFoundError
+from apps.community.domain.exceptions import (
+    CommentNotFoundError,
+    CommentReactionNotFoundError,
+    CommunityNotFoundError,
+    CommunityPostNotFoundError,
+    ReactionNotFoundError,
+)
 from apps.community.domain.repositories import (
+    ICommentReactionRepository,
     ICommunityMemberRepository,
     ICommunityPostRepository,
     ICommunityRepository,
+    IPostCommentRepository,
     IPostReactionRepository,
 )
-from apps.community.infrastructure.models import Community, CommunityMember, CommunityPost, CommunityPostReaction
+from apps.community.infrastructure.models import (
+    CommentReaction,
+    Community,
+    CommunityMember,
+    CommunityPost,
+    CommunityPostReaction,
+    PostComment,
+)
 
 
 class DjangoCommunityRepository(ICommunityRepository):
@@ -132,3 +149,62 @@ class DjangoPostReactionRepository(IPostReactionRepository):
     def list_by_post(self, post_id: uuid.UUID) -> list[PostReactionEntity]:
         """Return all reactions for a given post."""
         return [r.to_entity() for r in CommunityPostReaction.objects.filter(post_id=post_id)]
+
+
+class DjangoPostCommentRepository(IPostCommentRepository):
+    """PostgreSQL-backed post comment repository."""
+
+    def create(self, comment: PostCommentEntity) -> PostCommentEntity:
+        """Persist a new comment and return it as an entity."""
+        obj = PostComment.from_entity(comment)
+        obj.save()
+        return obj.to_entity()
+
+    def get_by_id(self, comment_id: uuid.UUID) -> PostCommentEntity:
+        """Raise CommentNotFoundError if not found."""
+        try:
+            return PostComment.objects.get(id=comment_id).to_entity()
+        except PostComment.DoesNotExist:
+            raise CommentNotFoundError(f"Comment {comment_id} not found.")
+
+    def list_by_post(self, post_id: uuid.UUID) -> list[PostCommentEntity]:
+        """Return all non-deleted comments for a post."""
+        return [c.to_entity() for c in PostComment.objects.filter(post_id=post_id, deleted_at__isnull=True)]
+
+    def update(self, comment: PostCommentEntity) -> None:
+        """Persist changes to an existing comment."""
+        PostComment.objects.filter(id=comment.id).update(
+            content=comment.content,
+            is_hidden=comment.is_hidden,
+            deleted_at=comment.deleted_at,
+        )
+
+
+class DjangoCommentReactionRepository(ICommentReactionRepository):
+    """PostgreSQL-backed comment reaction repository."""
+
+    def upsert(self, reaction: CommentReactionEntity) -> CommentReactionEntity:
+        """Insert or replace the reaction for (comment_id, user_id)."""
+        obj, _ = CommentReaction.objects.update_or_create(
+            comment_id=reaction.comment_id,
+            user_id=reaction.user_id,
+            defaults={"id": reaction.id, "reaction_type": reaction.reaction_type},
+        )
+        return obj.to_entity()
+
+    def delete(self, comment_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """Remove the reaction; raise CommentReactionNotFoundError if absent."""
+        deleted, _ = CommentReaction.objects.filter(comment_id=comment_id, user_id=user_id).delete()
+        if not deleted:
+            raise CommentReactionNotFoundError(f"No reaction from user {user_id} on comment {comment_id}.")
+
+    def get_by_comment_and_user(self, comment_id: uuid.UUID, user_id: uuid.UUID) -> CommentReactionEntity | None:
+        """Return the reaction if it exists, else None."""
+        try:
+            return CommentReaction.objects.get(comment_id=comment_id, user_id=user_id).to_entity()
+        except CommentReaction.DoesNotExist:
+            return None
+
+    def list_by_comment(self, comment_id: uuid.UUID) -> list[CommentReactionEntity]:
+        """Return all reactions for a given comment."""
+        return [r.to_entity() for r in CommentReaction.objects.filter(comment_id=comment_id)]

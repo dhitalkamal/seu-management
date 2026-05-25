@@ -5,11 +5,14 @@ from __future__ import annotations
 from django.urls import URLPattern, path
 
 from .views import (
+    CommentReactionView,
     CommunityDetailView,
     CommunityJoinView,
     CommunityListCreateView,
     CommunityPostDetailView,
     CommunityPostListCreateView,
+    PostCommentDetailView,
+    PostCommentListCreateView,
     PostReactionDeleteView,
     PostReactionView,
 )
@@ -30,4 +33,7 @@ urlpatterns: list[URLPattern] = [
         PostReactionDeleteView.as_view(),
         name="post-reaction-delete",
     ),
+    path("posts/<uuid:post_id>/comments/", PostCommentListCreateView.as_view(), name="post-comment-list-create"),
+    path("comments/<uuid:comment_id>/", PostCommentDetailView.as_view(), name="post-comment-detail"),
+    path("comments/<uuid:comment_id>/reactions/", CommentReactionView.as_view(), name="comment-reaction"),
 ]

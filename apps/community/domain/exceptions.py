@@ -21,3 +21,15 @@ class SlugAlreadyExistsError(Exception):
 
 class ReactionNotFoundError(Exception):
     """Raised when a user tries to remove a reaction that does not exist."""
+
+
+class CommentNotFoundError(Exception):
+    """Raised when a comment cannot be found."""
+
+
+class CommentEditWindowExpiredError(Exception):
+    """Raised when a user tries to edit a comment outside the 15-minute window."""
+
+
+class CommentReactionNotFoundError(Exception):
+    """Raised when a user tries to remove a comment reaction that does not exist."""

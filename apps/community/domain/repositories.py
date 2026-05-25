@@ -6,9 +6,11 @@ import uuid
 from abc import ABC, abstractmethod
 
 from apps.community.domain.entities import (
+    CommentReactionEntity,
     CommunityEntity,
     CommunityMemberEntity,
     CommunityPostEntity,
+    PostCommentEntity,
     PostReactionEntity,
 )
 
@@ -91,3 +93,43 @@ class IPostReactionRepository(ABC):
     @abstractmethod
     def list_by_post(self, post_id: uuid.UUID) -> list[PostReactionEntity]:
         """Return all reactions for a given post."""
+
+
+class IPostCommentRepository(ABC):
+    """Persistence interface for post comments."""
+
+    @abstractmethod
+    def create(self, comment: PostCommentEntity) -> PostCommentEntity:
+        """Persist a new comment and return it."""
+
+    @abstractmethod
+    def get_by_id(self, comment_id: uuid.UUID) -> PostCommentEntity:
+        """Return a comment by primary key, raising CommentNotFoundError if absent."""
+
+    @abstractmethod
+    def list_by_post(self, post_id: uuid.UUID) -> list[PostCommentEntity]:
+        """Return all non-deleted comments for a post."""
+
+    @abstractmethod
+    def update(self, comment: PostCommentEntity) -> None:
+        """Persist changes to an existing comment."""
+
+
+class ICommentReactionRepository(ABC):
+    """Persistence interface for comment reactions."""
+
+    @abstractmethod
+    def upsert(self, reaction: CommentReactionEntity) -> CommentReactionEntity:
+        """Insert or replace the reaction for (comment_id, user_id)."""
+
+    @abstractmethod
+    def delete(self, comment_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """Remove the reaction, raising CommentReactionNotFoundError if absent."""
+
+    @abstractmethod
+    def get_by_comment_and_user(self, comment_id: uuid.UUID, user_id: uuid.UUID) -> CommentReactionEntity | None:
+        """Return the reaction if it exists, else None."""
+
+    @abstractmethod
+    def list_by_comment(self, comment_id: uuid.UUID) -> list[CommentReactionEntity]:
+        """Return all reactions for a given comment."""

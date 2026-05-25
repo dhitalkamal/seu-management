@@ -6,16 +6,26 @@ import uuid
 from datetime import datetime, timezone
 
 from apps.community.domain.entities import (
+    CommentReactionEntity,
     CommunityEntity,
     CommunityMemberEntity,
     CommunityPostEntity,
+    PostCommentEntity,
     PostReactionEntity,
 )
-from apps.community.domain.exceptions import CommunityNotFoundError, CommunityPostNotFoundError, ReactionNotFoundError
+from apps.community.domain.exceptions import (
+    CommentNotFoundError,
+    CommentReactionNotFoundError,
+    CommunityNotFoundError,
+    CommunityPostNotFoundError,
+    ReactionNotFoundError,
+)
 from apps.community.domain.repositories import (
+    ICommentReactionRepository,
     ICommunityMemberRepository,
     ICommunityPostRepository,
     ICommunityRepository,
+    IPostCommentRepository,
     IPostReactionRepository,
 )
 
@@ -176,3 +186,78 @@ def make_reaction(
         reaction_type=reaction_type,
         created_at=datetime.now(timezone.utc),
     )
+
+
+def make_comment(
+    post_id: uuid.UUID | None = None,
+    user_id: uuid.UUID | None = None,
+    parent_id: uuid.UUID | None = None,
+    deleted: bool = False,
+) -> PostCommentEntity:
+    """Build a PostCommentEntity with sensible defaults for testing."""
+    now = datetime.now(timezone.utc)
+    return PostCommentEntity(
+        id=uuid.uuid4(),
+        post_id=post_id or uuid.uuid4(),
+        user_id=user_id or uuid.uuid4(),
+        content="A comment",
+        is_hidden=False,
+        parent_id=parent_id,
+        created_at=now,
+        updated_at=now,
+        deleted_at=now if deleted else None,
+    )
+
+
+class FakePostCommentRepository(IPostCommentRepository):
+    """In-memory comment store keyed by comment id."""
+
+    def __init__(self, comments: list[PostCommentEntity] | None = None) -> None:
+        self._store: dict[uuid.UUID, PostCommentEntity] = {c.id: c for c in (comments or [])}
+
+    def create(self, comment: PostCommentEntity) -> PostCommentEntity:
+        """Store and return the comment."""
+        self._store[comment.id] = comment
+        return comment
+
+    def get_by_id(self, comment_id: uuid.UUID) -> PostCommentEntity:
+        """Raise CommentNotFoundError if absent."""
+        c = self._store.get(comment_id)
+        if c is None:
+            raise CommentNotFoundError("Not found.")
+        return c
+
+    def list_by_post(self, post_id: uuid.UUID) -> list[PostCommentEntity]:
+        """Return non-deleted comments for the post."""
+        return [c for c in self._store.values() if c.post_id == post_id and c.deleted_at is None]
+
+    def update(self, comment: PostCommentEntity) -> None:
+        """Persist changes to an existing comment."""
+        self._store[comment.id] = comment
+
+
+class FakeCommentReactionRepository(ICommentReactionRepository):
+    """In-memory comment reaction store keyed by (comment_id, user_id)."""
+
+    def __init__(self) -> None:
+        self._store: dict[tuple[uuid.UUID, uuid.UUID], CommentReactionEntity] = {}
+
+    def upsert(self, reaction: CommentReactionEntity) -> CommentReactionEntity:
+        """Insert or replace the reaction for (comment_id, user_id)."""
+        self._store[(reaction.comment_id, reaction.user_id)] = reaction
+        return reaction
+
+    def delete(self, comment_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """Remove the reaction; raise CommentReactionNotFoundError if absent."""
+        key = (comment_id, user_id)
+        if key not in self._store:
+            raise CommentReactionNotFoundError("No reaction.")
+        del self._store[key]
+
+    def get_by_comment_and_user(self, comment_id: uuid.UUID, user_id: uuid.UUID) -> CommentReactionEntity | None:
+        """Return the reaction if it exists, else None."""
+        return self._store.get((comment_id, user_id))
+
+    def list_by_comment(self, comment_id: uuid.UUID) -> list[CommentReactionEntity]:
+        """Return all reactions for a given comment."""
+        return [r for r in self._store.values() if r.comment_id == comment_id]

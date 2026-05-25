@@ -78,6 +78,7 @@ class VolunteerApplication(models.Model):
     check_in_at = models.DateTimeField(null=True, blank=True)
     check_out_at = models.DateTimeField(null=True, blank=True)
     rating = models.SmallIntegerField(null=True, blank=True)
+    feedback = models.TextField(null=True, blank=True)
     certificate_issued = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -95,6 +96,7 @@ class VolunteerApplication(models.Model):
             check_in_at=self.check_in_at,
             check_out_at=self.check_out_at,
             rating=self.rating,
+            feedback=self.feedback,
             certificate_issued=self.certificate_issued,
         )
 
@@ -110,5 +112,6 @@ class VolunteerApplication(models.Model):
             check_in_at=entity.check_in_at,
             check_out_at=entity.check_out_at,
             rating=entity.rating,
+            feedback=entity.feedback,
             certificate_issued=entity.certificate_issued,
         )

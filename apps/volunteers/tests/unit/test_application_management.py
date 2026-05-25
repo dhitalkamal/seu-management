@@ -12,6 +12,7 @@ from apps.volunteers.application.use_cases.list_applications import ListApplicat
 from apps.volunteers.application.use_cases.reject_application import RejectApplicationUseCase
 from apps.volunteers.domain.exceptions import ApplicationNotFoundError
 from apps.volunteers.tests.unit.fakes import (
+    FakeParticipationContextClient,
     FakeVolunteerApplicationRepository,
     make_application,
 )
@@ -28,9 +29,7 @@ def test_approve_sets_status_approved():
 def test_approve_missing_raises():
     """Approving a non-existent application raises ApplicationNotFoundError."""
     with pytest.raises(ApplicationNotFoundError):
-        ApproveApplicationUseCase(FakeVolunteerApplicationRepository()).execute(
-            application_id=uuid.uuid4()
-        )
+        ApproveApplicationUseCase(FakeVolunteerApplicationRepository()).execute(application_id=uuid.uuid4())
 
 
 def test_reject_sets_status_rejected():
@@ -64,3 +63,12 @@ def test_list_applications_empty():
     """ListApplicationsUseCase returns empty list when no applications exist for the role."""
     repo = FakeVolunteerApplicationRepository()
     assert ListApplicationsUseCase(repo).execute(role_id=uuid.uuid4()) == []
+
+
+def test_approve_records_volunteer_context_via_client():
+    """Approving calls set_volunteer on the context client with the application's event and user."""
+    app = make_application(status="pending")
+    repo = FakeVolunteerApplicationRepository([app])
+    client = FakeParticipationContextClient()
+    ApproveApplicationUseCase(repo, context_client=client).execute(application_id=app.id)
+    assert (app.event_id, app.user_id) in client.volunteer_sets

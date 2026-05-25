@@ -8,10 +8,12 @@ from datetime import datetime, timezone
 from apps.volunteers.domain.entities import VolunteerApplicationEntity
 from apps.volunteers.domain.exceptions import (
     AlreadyAppliedError,
+    AttendeeConflictError,
     RoleAtCapacityError,
     RoleNotFoundError,
 )
 from apps.volunteers.domain.repositories import (
+    IParticipationContextClient,
     IVolunteerApplicationRepository,
     IVolunteerRoleRepository,
 )
@@ -24,9 +26,11 @@ class ApplyToVolunteerRoleUseCase:
         self,
         role_repo: IVolunteerRoleRepository,
         app_repo: IVolunteerApplicationRepository,
+        context_client: IParticipationContextClient | None = None,
     ) -> None:
         self._roles = role_repo
         self._apps = app_repo
+        self._context = context_client
 
     def execute(
         self,
@@ -50,6 +54,10 @@ class ApplyToVolunteerRoleUseCase:
 
         if not role.is_active:
             raise RoleNotFoundError("This volunteer role is not accepting applications.")
+
+        # ! block attendees from also volunteering for the same event
+        if self._context is not None and self._context.is_attendee(event_id, user_id):
+            raise AttendeeConflictError("You are already registered as an attendee for this event.")
 
         if self._apps.has_active(role_id, user_id):
             raise AlreadyAppliedError("You have already applied to this role.")

@@ -35,6 +35,7 @@ class VolunteerApplicationEntity:
     check_in_at: datetime | None = None
     check_out_at: datetime | None = None
     rating: int | None = None
+    feedback: str | None = None
     certificate_issued: bool = False
 
     @property

@@ -46,6 +46,14 @@ class VolunteerApplicationResponseSerializer(serializers.Serializer):
     check_out_at = serializers.DateTimeField(allow_null=True)
     hours_worked = serializers.FloatField(allow_null=True)
     rating = serializers.IntegerField(allow_null=True)
+    feedback = serializers.CharField(allow_null=True)
     certificate_issued = serializers.BooleanField()
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
+
+
+class RateVolunteerSerializer(serializers.Serializer):
+    """Payload for rating a completed volunteer."""
+
+    rating = serializers.IntegerField(min_value=1, max_value=5)
+    feedback = serializers.CharField(required=False, allow_null=True, default=None)

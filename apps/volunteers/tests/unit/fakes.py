@@ -9,6 +9,7 @@ from typing import Sequence
 from apps.volunteers.domain.entities import VolunteerApplicationEntity, VolunteerRoleEntity
 from apps.volunteers.domain.exceptions import RoleNotFoundError
 from apps.volunteers.domain.repositories import (
+    IParticipationContextClient,
     IVolunteerApplicationRepository,
     IVolunteerRoleRepository,
 )
@@ -48,6 +49,7 @@ def make_application(**kwargs: object) -> VolunteerApplicationEntity:
         "check_in_at": None,
         "check_out_at": None,
         "rating": None,
+        "feedback": None,
         "certificate_issued": False,
     }
     defaults.update(kwargs)
@@ -86,9 +88,7 @@ class FakeVolunteerApplicationRepository(IVolunteerApplicationRepository):
     """In-memory volunteer application store."""
 
     def __init__(self, applications: Sequence[VolunteerApplicationEntity] | None = None) -> None:
-        self._store: dict[uuid.UUID, VolunteerApplicationEntity] = {
-            a.id: a for a in (applications or [])
-        }
+        self._store: dict[uuid.UUID, VolunteerApplicationEntity] = {a.id: a for a in (applications or [])}
 
     def create(self, entity: VolunteerApplicationEntity) -> VolunteerApplicationEntity:
         """Persist and return the entity."""
@@ -97,14 +97,12 @@ class FakeVolunteerApplicationRepository(IVolunteerApplicationRepository):
 
     def has_active(self, role_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         """True if a non-cancelled application exists for this (role, user) pair."""
-        return any(
-            a.volunteer_role_id == role_id and a.user_id == user_id and a.status != "cancelled"
-            for a in self._store.values()
-        )
+        return any(a.volunteer_role_id == role_id and a.user_id == user_id and a.status != "cancelled" for a in self._store.values())
 
     def get_by_id(self, application_id: uuid.UUID) -> VolunteerApplicationEntity:
         """Return the application or raise ApplicationNotFoundError."""
         from apps.volunteers.domain.exceptions import ApplicationNotFoundError
+
         entity = self._store.get(application_id)
         if entity is None:
             raise ApplicationNotFoundError("Application not found.")
@@ -118,3 +116,19 @@ class FakeVolunteerApplicationRepository(IVolunteerApplicationRepository):
     def list_by_role(self, role_id: uuid.UUID) -> list[VolunteerApplicationEntity]:
         """Return all applications for the given role."""
         return [a for a in self._store.values() if a.volunteer_role_id == role_id]
+
+
+class FakeParticipationContextClient(IParticipationContextClient):
+    """In-memory fake for the participation context port."""
+
+    def __init__(self, attendee_events: set[tuple[uuid.UUID, uuid.UUID]] | None = None) -> None:
+        self._attendees: set[tuple[uuid.UUID, uuid.UUID]] = attendee_events or set()
+        self.volunteer_sets: list[tuple[uuid.UUID, uuid.UUID]] = []
+
+    def is_attendee(self, event_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        """True if the (event_id, user_id) pair was pre-loaded as an attendee."""
+        return (event_id, user_id) in self._attendees
+
+    def set_volunteer(self, event_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        """Record the (event_id, user_id) pair as a volunteer for assertion in tests."""
+        self.volunteer_sets.append((event_id, user_id))

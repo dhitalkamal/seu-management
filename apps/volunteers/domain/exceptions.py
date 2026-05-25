@@ -52,3 +52,24 @@ class NotCheckedInError(DomainError):
 
     http_status = 409
     code = "ERR_VOLUNTEER_NOT_CHECKED_IN"
+
+
+class AttendeeConflictError(DomainError):
+    """User is already registered as an attendee for this event."""
+
+    http_status = 409
+    code = "ERR_VOLUNTEER_ATTENDEE_CONFLICT"
+
+
+class ApplicationNotRatableError(DomainError):
+    """Application cannot be rated because the volunteer has not completed check-out."""
+
+    http_status = 409
+    code = "ERR_VOLUNTEER_APPLICATION_NOT_RATABLE"
+
+
+class InvalidRatingError(DomainError):
+    """Rating value is outside the permitted range of 1 to 5."""
+
+    http_status = 422
+    code = "ERR_VOLUNTEER_INVALID_RATING"

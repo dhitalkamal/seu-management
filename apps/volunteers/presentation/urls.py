@@ -5,6 +5,7 @@ from __future__ import annotations
 from django.urls import URLPattern, path
 
 from .views import (
+    RateVolunteerView,
     VolunteerApplicationApproveView,
     VolunteerApplicationCancelView,
     VolunteerApplicationListView,
@@ -47,5 +48,10 @@ urlpatterns: list[URLPattern] = [
         "applications/<uuid:application_id>/checkout/",
         VolunteerCheckOutView.as_view(),
         name="volunteer-application-checkout",
+    ),
+    path(
+        "applications/<uuid:application_id>/rate/",
+        RateVolunteerView.as_view(),
+        name="volunteer-application-rate",
     ),
 ]

@@ -62,6 +62,8 @@ class DjangoVolunteerApplicationRepository(IVolunteerApplicationRepository):
             status=entity.status,
             check_in_at=entity.check_in_at,
             check_out_at=entity.check_out_at,
+            rating=entity.rating,
+            feedback=entity.feedback,
         )
         return entity
 

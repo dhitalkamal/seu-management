@@ -27,7 +27,7 @@ class CreateModerationCaseUseCase:
         content_title: str,
         reason: str,
         reporter_id: uuid.UUID | None = None,
-        organisation_id: uuid.UUID | None = None,
+        organization_id: uuid.UUID | None = None,
     ) -> ModerationCaseEntity:
         """
         Validate and persist a new moderation case.
@@ -37,7 +37,7 @@ class CreateModerationCaseUseCase:
         @param content_title - human-readable title for the case list
         @param reason - reporter's stated reason for the flag
         @param reporter_id - uuid of the reporting user, optional for system flags
-        @param organisation_id - org the content belongs to, optional
+        @param organization_id - org the content belongs to, optional
         @returns the persisted ModerationCaseEntity with status=pending
         @raises InvalidContentTypeError if content_type is not recognised
         """
@@ -53,7 +53,7 @@ class CreateModerationCaseUseCase:
             content_id=content_id,
             content_title=content_title,
             reporter_id=reporter_id,
-            organisation_id=organisation_id,
+            organization_id=organization_id,
             reason=reason,
             status="pending",
             reviewer_id=None,

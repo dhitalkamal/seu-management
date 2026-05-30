@@ -1,4 +1,4 @@
-"""Use case: create a new organisation and assign the creator as owner."""
+"""Use case: create a new organization and assign the creator as owner."""
 
 from __future__ import annotations
 
@@ -7,15 +7,15 @@ from datetime import datetime, timezone
 
 from apps.orgs.domain.entities import OrgEntity, OrgMemberEntity
 from apps.orgs.domain.exceptions import OrgSlugTakenError
-from apps.orgs.domain.repositories import IOrganisationRepository, IOrgMemberRepository
+from apps.orgs.domain.repositories import IOrganizationRepository, IOrgMemberRepository
 
 
-class CreateOrganisationUseCase:
-    """Create an organisation in pending_review status and assign the creator as owner."""
+class CreateOrganizationUseCase:
+    """Create an organization in pending_review status and assign the creator as owner."""
 
     def __init__(
         self,
-        org_repo: IOrganisationRepository,
+        org_repo: IOrganizationRepository,
         member_repo: IOrgMemberRepository,
     ) -> None:
         self._orgs = org_repo
@@ -45,7 +45,7 @@ class CreateOrganisationUseCase:
         Validate slug uniqueness, persist the org, and create the owner membership.
 
         @param created_by - UUID from JWT; becomes the first owner member
-        @param name - organisation display name
+        @param name - organization display name
         @param slug - URL-safe unique identifier
         @param contact_email - primary contact email
         @returns the persisted OrgEntity with status=pending_review
@@ -82,7 +82,7 @@ class CreateOrganisationUseCase:
 
         owner = OrgMemberEntity(
             id=uuid.uuid4(),
-            organisation_id=saved.id,
+            organization_id=saved.id,
             user_id=created_by,
             role="owner",
             is_active=True,

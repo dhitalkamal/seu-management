@@ -1,4 +1,4 @@
-"""Use case: decline a pending organisation invite."""
+"""Use case: decline a pending organization invite."""
 
 from __future__ import annotations
 

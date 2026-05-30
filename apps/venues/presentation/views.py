@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.common.api.responses import created_response, error_response, success_response
+from apps.orgs.infrastructure.audit_publisher import publish_audit
 from apps.venues.application.use_cases.add_space import AddVenueSpaceUseCase
 from apps.venues.application.use_cases.cancel_booking import CancelBookingUseCase
 from apps.venues.application.use_cases.create_booking import CreateBookingUseCase
@@ -54,7 +55,7 @@ _CANCEL_BOOKING_UC = CancelBookingUseCase
 
 
 class VenueListCreateView(APIView):
-    """GET /venues/?organisation_id=... - list; POST /venues/ - create."""
+    """GET /venues/?organization_id=... - list; POST /venues/ - create."""
 
     permission_classes = [IsAuthenticated]
 
@@ -64,12 +65,12 @@ class VenueListCreateView(APIView):
         responses={200: VenueResponseSerializer(many=True)},
     )
     def get(self, request: Request) -> Response:
-        """Return all non-deleted venues for the given organisation."""
-        org_id_str = request.query_params.get("organisation_id")
+        """Return all non-deleted venues for the given organization."""
+        org_id_str = request.query_params.get("organization_id")
         if not org_id_str:
             return error_response(
                 code="ERR_VENUE_ORG_REQUIRED",
-                message="organisation_id query param is required.",
+                message="organization_id query param is required.",
                 http_status=400,
                 request=request,
             )
@@ -78,11 +79,11 @@ class VenueListCreateView(APIView):
         except ValueError:
             return error_response(
                 code="ERR_VENUE_INVALID_ORG_ID",
-                message="Invalid organisation_id.",
+                message="Invalid organization_id.",
                 http_status=400,
                 request=request,
             )
-        venues = _LIST_UC(_REPO()).execute(organisation_id=org_id)
+        venues = _LIST_UC(_REPO()).execute(organization_id=org_id)
         return success_response(VenueResponseSerializer(venues, many=True).data, request=request)
 
     @extend_schema(
@@ -92,12 +93,12 @@ class VenueListCreateView(APIView):
         responses={201: VenueResponseSerializer},
     )
     def post(self, request: Request) -> Response:
-        """Create a new venue for an organisation."""
+        """Create a new venue for an organization."""
         ser = CreateVenueSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
         venue = _CREATE_UC(_REPO()).execute(
-            organisation_id=d["organisation_id"],
+            organization_id=d["organization_id"],
             created_by=uuid.UUID(str(request.user.id)),
             name=d["name"],
             address=d["address"],
@@ -106,6 +107,12 @@ class VenueListCreateView(APIView):
             capacity=d["capacity"],
             description=d.get("description", ""),
             website=d.get("website", ""),
+        )
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="venue.created",
+            metadata={"venue_id": str(venue.id), "venue_name": venue.name},
         )
         return _CREATED(VenueResponseSerializer(venue).data, request=request)
 
@@ -149,6 +156,12 @@ class VenueDetailView(APIView):
             venue = _UPDATE_UC(_REPO()).execute(venue_id=venue_id, **d)
         except VenueNotFoundError as exc:
             return error_response(code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request)
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="venue.updated",
+            metadata={"venue_id": str(venue_id)},
+        )
         return success_response(VenueResponseSerializer(venue).data, request=request)
 
     @extend_schema(
@@ -165,6 +178,12 @@ class VenueDetailView(APIView):
             _DELETE_UC(_REPO()).execute(venue_id=venue_id)
         except VenueNotFoundError as exc:
             return error_response(code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request)
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="venue.deleted",
+            metadata={"venue_id": str(venue_id)},
+        )
         return Response(status=204)
 
 
@@ -262,6 +281,12 @@ class VenueBookingListCreateView(APIView):
             return error_response(code="ERR_VENUE_NOT_FOUND", message=str(exc), http_status=404, request=request)
         except VenueConflictError as exc:
             return error_response(code="ERR_VENUE_CONFLICT", message=str(exc), http_status=409, request=request)
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="venue.booking.created",
+            metadata={"venue_id": str(venue_id), "booking_id": str(booking.id)},
+        )
         return _CREATED(VenueBookingResponseSerializer(booking).data, request=request)
 
 
@@ -284,4 +309,10 @@ class VenueBookingDetailView(APIView):
             _CANCEL_BOOKING_UC(_BOOKING_REPO()).execute(booking_id=booking_id)
         except VenueBookingNotFoundError as exc:
             return error_response(code="ERR_BOOKING_NOT_FOUND", message=str(exc), http_status=404, request=request)
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="venue.booking.cancelled",
+            metadata={"venue_id": str(venue_id), "booking_id": str(booking_id)},
+        )
         return success_response({"cancelled": True}, request=request)

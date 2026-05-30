@@ -1,4 +1,4 @@
-"""Use case: accept a pending organisation invite and create the membership."""
+"""Use case: accept a pending organization invite and create the membership."""
 
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ class AcceptInviteUseCase:
 
         member = OrgMemberEntity(
             id=uuid.uuid4(),
-            organisation_id=invite.org_id,
+            organization_id=invite.org_id,
             user_id=user_id,
             role=invite.role,
             is_active=True,

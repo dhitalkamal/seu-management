@@ -15,7 +15,7 @@ from apps.orgs.domain.exceptions import (
     InviteNotPendingError,
     OrgNotFoundError,
 )
-from apps.orgs.domain.repositories import IOrganisationRepository, IOrgInviteRepository
+from apps.orgs.domain.repositories import IOrganizationRepository, IOrgInviteRepository
 
 
 def _now() -> datetime:
@@ -58,7 +58,7 @@ def _make_invite(**kwargs: object) -> OrgInviteEntity:
     return OrgInviteEntity(**defaults)  # type: ignore[arg-type]
 
 
-class FakeOrgRepo(IOrganisationRepository):
+class FakeOrgRepo(IOrganizationRepository):
     """Minimal in-memory org store."""
 
     def __init__(self, orgs: Sequence[OrgEntity] | None = None) -> None:
@@ -71,7 +71,7 @@ class FakeOrgRepo(IOrganisationRepository):
     def get_by_id(self, org_id: uuid.UUID) -> OrgEntity:
         entity = self._store.get(org_id)
         if entity is None:
-            raise OrgNotFoundError("Organisation not found.")
+            raise OrgNotFoundError("Organization not found.")
         return entity
 
     def get_by_slug(self, slug: str) -> OrgEntity | None:

@@ -8,8 +8,8 @@ from abc import ABC, abstractmethod
 from apps.orgs.domain.entities import OrgEntity, OrgInviteEntity, OrgMemberEntity
 
 
-class IOrganisationRepository(ABC):
-    """Persistence contract for Organisation aggregates."""
+class IOrganizationRepository(ABC):
+    """Persistence contract for Organization aggregates."""
 
     @abstractmethod
     def create(self, entity: OrgEntity) -> OrgEntity: ...

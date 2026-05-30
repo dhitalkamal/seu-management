@@ -23,7 +23,7 @@ def test_create_case_status_is_pending():
         content_title="Some Event",
         reason="Spam",
         reporter_id=uuid.uuid4(),
-        organisation_id=uuid.uuid4(),
+        organization_id=uuid.uuid4(),
     )
     assert result.status == "pending"
     assert result.reviewer_id is None
@@ -43,14 +43,14 @@ def test_create_case_stores_all_fields():
         content_title="Offensive Post",
         reason="Hate speech",
         reporter_id=reporter_id,
-        organisation_id=org_id,
+        organization_id=org_id,
     )
     assert result.content_type == "post"
     assert result.content_id == content_id
     assert result.content_title == "Offensive Post"
     assert result.reason == "Hate speech"
     assert result.reporter_id == reporter_id
-    assert result.organisation_id == org_id
+    assert result.organization_id == org_id
     # case is saved in the repo
     assert len(repo._store) == 1
 
@@ -74,7 +74,7 @@ def test_create_case_without_reporter_is_allowed():
         content_title="Flagged Comment",
         reason="Auto-flagged",
         reporter_id=None,
-        organisation_id=None,
+        organization_id=None,
     )
     assert result.reporter_id is None
-    assert result.organisation_id is None
+    assert result.organization_id is None

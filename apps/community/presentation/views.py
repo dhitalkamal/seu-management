@@ -35,6 +35,7 @@ from apps.community.presentation.serializers import (
     CreateCommunitySerializer,
     CreatePostSerializer,
 )
+from apps.orgs.infrastructure.audit_publisher import publish_audit
 
 _CREATED = created_response
 _LIST_UC = ListCommunitiesUseCase
@@ -84,7 +85,7 @@ class CommunityListCreateView(APIView):
                 name=d["name"],
                 slug=d["slug"],
                 privacy=d["privacy"],
-                organisation_id=d.get("organisation_id"),
+                organization_id=d.get("organization_id"),
                 description=d.get("description", ""),
             )
         except SlugAlreadyExistsError as exc:
@@ -94,6 +95,12 @@ class CommunityListCreateView(APIView):
                 http_status=400,
                 request=request,
             )
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="community.created",
+            metadata={"community_id": str(community.id), "community_name": community.name},
+        )
         return _CREATED(CommunityResponseSerializer(community).data, request=request)
 
 
@@ -217,6 +224,12 @@ class CommunityPostListCreateView(APIView):
                 http_status=404,
                 request=request,
             )
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="post.created",
+            metadata={"community_id": str(community_id), "post_id": str(post.id)},
+        )
         return _CREATED(CommunityPostResponseSerializer(post).data, request=request)
 
 
@@ -247,4 +260,10 @@ class CommunityPostDetailView(APIView):
                 http_status=404,
                 request=request,
             )
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="post.deleted",
+            metadata={"post_id": str(post_id)},
+        )
         return Response(status=204)

@@ -12,8 +12,8 @@ class IVenueRepository(ABC):
     """Persistence interface for venue aggregates."""
 
     @abstractmethod
-    def list_by_org(self, organisation_id: uuid.UUID) -> list[VenueEntity]:
-        """Return all non-deleted venues for an organisation."""
+    def list_by_org(self, organization_id: uuid.UUID) -> list[VenueEntity]:
+        """Return all non-deleted venues for an organization."""
 
     @abstractmethod
     def get_by_id(self, venue_id: uuid.UUID) -> VenueEntity:

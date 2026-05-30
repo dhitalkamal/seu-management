@@ -44,7 +44,7 @@ def make_role(**kwargs: object) -> VolunteerRoleEntity:
         "capacity": 5,
         "is_active": True,
         "created_at": _now(),
-        "organisation_id": None,
+        "organization_id": None,
         "description": "",
     }
     defaults.update(kwargs)

@@ -33,15 +33,13 @@ class TicketListCreateView(APIView):
         responses={200: TicketResponseSerializer(many=True)},
     )
     def get(self, request: Request) -> Response:
-        """Return all tickets. Staff only."""
-        if not request.user.is_staff:  # type: ignore[union-attr]
-            return error_response(
-                code="ERR_FORBIDDEN",
-                message="Staff access required.",
-                http_status=403,
-                request=request,
-            )
-        tickets = ListTicketsUseCase(DjangoSupportTicketRepository()).execute()
+        """Return all tickets for staff, or only the user's own tickets."""
+        repo = DjangoSupportTicketRepository()
+        if getattr(request.user, "is_staff", False):
+            tickets = ListTicketsUseCase(repo).execute()
+        else:
+            user_id = uuid.UUID(str(request.user.id))
+            tickets = ListTicketsUseCase(repo).execute(submitted_by=user_id)
         return success_response(TicketResponseSerializer(tickets, many=True).data, request=request)
 
     @extend_schema(
@@ -130,7 +128,7 @@ class OrgAnalyticsView(APIView):
         from django.db.models import Avg, Count, ExpressionWrapper, F, FloatField
         from django.db.models.functions import TruncMonth
 
-        from apps.orgs.infrastructure.models import Organisation
+        from apps.orgs.infrastructure.models import Organization
         from apps.orgs.infrastructure.support_models import SupportTicket
 
         now = datetime.now(timezone.utc)
@@ -138,18 +136,18 @@ class OrgAnalyticsView(APIView):
         d60 = now - timedelta(days=60)
         d365 = now - timedelta(days=365)
 
-        total = Organisation.objects.count()
-        active = Organisation.objects.filter(status="active").count()
-        pending = Organisation.objects.filter(status="pending_review").count()
-        suspended = Organisation.objects.filter(status="suspended").count()
-        verified = Organisation.objects.filter(is_verified=True).count()
+        total = Organization.objects.count()
+        active = Organization.objects.filter(status="active").count()
+        pending = Organization.objects.filter(status="pending_review").count()
+        suspended = Organization.objects.filter(status="suspended").count()
+        verified = Organization.objects.filter(is_verified=True).count()
 
-        new_30d = Organisation.objects.filter(created_at__gte=d30).count()
-        prev_30d = Organisation.objects.filter(created_at__gte=d60, created_at__lt=d30).count()
+        new_30d = Organization.objects.filter(created_at__gte=d30).count()
+        prev_30d = Organization.objects.filter(created_at__gte=d60, created_at__lt=d30).count()
 
         plan_breakdown = {}
-        for plan in Organisation.Plan.values:
-            count = Organisation.objects.filter(plan=plan).count()
+        for plan in Organization.Plan.values:
+            count = Organization.objects.filter(plan=plan).count()
             if count > 0:
                 plan_breakdown[plan] = count
 
@@ -157,7 +155,7 @@ class OrgAnalyticsView(APIView):
         escalated_tickets = SupportTicket.objects.filter(status="escalated").count()
 
         monthly_qs = (
-            Organisation.objects.filter(created_at__gte=d365)
+            Organization.objects.filter(created_at__gte=d365)
             .annotate(month=TruncMonth("created_at"))
             .values("month")
             .annotate(count=Count("id"))
@@ -173,7 +171,7 @@ class OrgAnalyticsView(APIView):
             org_monthly_series.append(month_map.get(key, 0))
 
         # * average hours between org creation and review decision, for reviewed orgs only
-        avg_seconds_result = Organisation.objects.filter(reviewed_at__isnull=False).aggregate(
+        avg_seconds_result = Organization.objects.filter(reviewed_at__isnull=False).aggregate(
             avg_seconds=Avg(
                 ExpressionWrapper(
                     F("reviewed_at") - F("created_at"),

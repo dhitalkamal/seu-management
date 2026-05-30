@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 ("content_id", models.UUIDField()),
                 ("content_title", models.CharField(max_length=500)),
                 ("reporter_id", models.UUIDField(blank=True, null=True)),
-                ("organisation_id", models.UUIDField(blank=True, null=True)),
+                ("organization_id", models.UUIDField(blank=True, null=True)),
                 ("reason", models.TextField()),
                 (
                     "status",

@@ -39,7 +39,7 @@ class SendCampaignUseCase:
 
         @param campaign_id  - the campaign to send
         @param user_emails  - resolved recipient email list (caller resolves segment)
-        @param org_id       - the owning organisation's UUID for routing metadata
+        @param org_id       - the owning organization's UUID for routing metadata
         @returns the updated CampaignEntity
         @raises CampaignAlreadySentError if status is already sent
         """

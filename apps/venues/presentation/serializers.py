@@ -15,7 +15,7 @@ class CreateVenueSerializer(serializers.Serializer):
     capacity = serializers.IntegerField(min_value=1)
     description = serializers.CharField(required=False, allow_blank=True, default="")
     website = serializers.URLField(required=False, allow_blank=True, default="")
-    organisation_id = serializers.UUIDField()
+    organization_id = serializers.UUIDField()
 
 
 class UpdateVenueSerializer(serializers.Serializer):
@@ -34,7 +34,7 @@ class VenueResponseSerializer(serializers.Serializer):
     """Public shape of a venue resource."""
 
     id = serializers.UUIDField()
-    organisation_id = serializers.UUIDField()
+    organization_id = serializers.UUIDField()
     name = serializers.CharField()
     address = serializers.CharField()
     city = serializers.CharField()

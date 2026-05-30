@@ -18,19 +18,20 @@ from apps.common.health import check_database, check_rabbitmq, check_redis
 from apps.common.permissions import IsOrgAdmin, IsOrgOwner, IsSuperAdminFromAllowedIP
 from apps.orgs.application.use_cases.accept_invite import AcceptInviteUseCase
 from apps.orgs.application.use_cases.add_member import AddOrgMemberUseCase
-from apps.orgs.application.use_cases.approve_org import ApproveOrganisationUseCase
+from apps.orgs.application.use_cases.approve_org import ApproveOrganizationUseCase
 from apps.orgs.application.use_cases.create_invite import CreateInviteUseCase
-from apps.orgs.application.use_cases.create_org import CreateOrganisationUseCase
+from apps.orgs.application.use_cases.create_org import CreateOrganizationUseCase
 from apps.orgs.application.use_cases.decline_invite import DeclineInviteUseCase
-from apps.orgs.application.use_cases.get_org import GetOrganisationUseCase
+from apps.orgs.application.use_cases.get_org import GetOrganizationUseCase
 from apps.orgs.application.use_cases.list_invites import ListInvitesUseCase
-from apps.orgs.application.use_cases.list_orgs import ListOrganisationsUseCase
-from apps.orgs.application.use_cases.reinstate_org import ReinstateOrganisationUseCase
-from apps.orgs.application.use_cases.reject_org import RejectOrganisationUseCase
+from apps.orgs.application.use_cases.list_orgs import ListOrganizationsUseCase
+from apps.orgs.application.use_cases.reinstate_org import ReinstateOrganizationUseCase
+from apps.orgs.application.use_cases.reject_org import RejectOrganizationUseCase
 from apps.orgs.application.use_cases.revoke_invite import RevokeInviteUseCase
-from apps.orgs.application.use_cases.soft_delete_org import SoftDeleteOrganisationUseCase
-from apps.orgs.application.use_cases.suspend_org import SuspendOrganisationUseCase
-from apps.orgs.application.use_cases.update_org import UpdateOrganisationUseCase
+from apps.orgs.application.use_cases.soft_delete_org import SoftDeleteOrganizationUseCase
+from apps.orgs.application.use_cases.suspend_org import SuspendOrganizationUseCase
+from apps.orgs.application.use_cases.update_org import UpdateOrganizationUseCase
+from apps.orgs.infrastructure.audit_publisher import publish_audit
 from apps.orgs.infrastructure.event_publisher import OrgEventPublisher
 from apps.orgs.infrastructure.repositories import DjangoOrgInviteRepository, DjangoOrgMemberRepository, DjangoOrgRepository
 from apps.orgs.presentation.serializers import (
@@ -50,20 +51,20 @@ _IS_AUTH = IsAuthenticated
 _CREATED = created_response
 _UUID = uuid.UUID
 _PAGINATION = StandardPagination
-_CREATE_ORG_UC = CreateOrganisationUseCase
-_GET_ORG_UC = GetOrganisationUseCase
-_LIST_ORGS_UC = ListOrganisationsUseCase
+_CREATE_ORG_UC = CreateOrganizationUseCase
+_GET_ORG_UC = GetOrganizationUseCase
+_LIST_ORGS_UC = ListOrganizationsUseCase
 _ADD_MEMBER_UC = AddOrgMemberUseCase
-_APPROVE_UC = ApproveOrganisationUseCase
-_REJECT_UC = RejectOrganisationUseCase
-_SUSPEND_UC = SuspendOrganisationUseCase
-_REINSTATE_UC = ReinstateOrganisationUseCase
-_SOFT_DELETE_UC = SoftDeleteOrganisationUseCase
+_APPROVE_UC = ApproveOrganizationUseCase
+_REJECT_UC = RejectOrganizationUseCase
+_SUSPEND_UC = SuspendOrganizationUseCase
+_REINSTATE_UC = ReinstateOrganizationUseCase
+_SOFT_DELETE_UC = SoftDeleteOrganizationUseCase
 _ORG_REPO = DjangoOrgRepository
 _MEMBER_REPO = DjangoOrgMemberRepository
 _CREATE_ORG_SER = CreateOrgSerializer
 _ORG_RESP_SER = OrgResponseSerializer
-_UPDATE_ORG_UC = UpdateOrganisationUseCase
+_UPDATE_ORG_UC = UpdateOrganizationUseCase
 _UPDATE_ORG_SER = UpdateOrgSerializer
 _ADD_MEMBER_SER = AddMemberSerializer
 _MEMBER_RESP_SER = OrgMemberResponseSerializer
@@ -191,13 +192,13 @@ class HealthCheckView(APIView):
 
 
 class OrgListCreateView(APIView):
-    """List the authenticated user's organisations or create a new one."""
+    """List the authenticated user's organizations or create a new one."""
 
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="List my organisations",
+        tags=["Organizations"],
+        summary="List my organizations",
         responses={200: OpenApiResponse(description="Paginated org list.", response=_ORG_RESP_SER(many=True))},
     )
     def get(self, request: Request) -> Response:
@@ -213,17 +214,17 @@ class OrgListCreateView(APIView):
         return paginator.get_paginated_response(_ORG_RESP_SER(page, many=True).data)
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Create an organisation",
+        tags=["Organizations"],
+        summary="Create an organization",
         request=_CREATE_ORG_SER,
         responses={
-            201: OpenApiResponse(description="Organisation created.", response=_ORG_RESP_SER),
+            201: OpenApiResponse(description="Organization created.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
             409: OpenApiResponse(description="Slug already taken."),
         },
     )
     def post(self, request: Request) -> Response:
-        """Create a new organisation; creator is assigned owner membership."""
+        """Create a new organization; creator is assigned owner membership."""
         ser = _CREATE_ORG_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
@@ -260,11 +261,17 @@ class OrgListCreateView(APIView):
             creator_id=creator_id,
             contact_email=result.contact_email,
         )
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.created",
+            metadata={"org_id": str(result.id), "org_name": result.name},
+        )
         return _CREATED(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgDetailView(APIView):
-    """Retrieve or update a single organisation by id."""
+    """Retrieve or update a single organization by id."""
 
     # GET is open to any authenticated member; PATCH requires at least admin
     permission_classes = [IsAuthenticated]
@@ -276,55 +283,61 @@ class OrgDetailView(APIView):
         return super().get_permissions()
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Get organisation",
+        tags=["Organizations"],
+        summary="Get organization",
         responses={
-            200: OpenApiResponse(description="Organisation found.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization found.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
         },
     )
     def get(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Return the organisation matching the given id."""
+        """Return the organization matching the given id."""
         result = _GET_ORG_UC(_ORG_REPO()).execute(org_id=org_id)
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Update organisation",
+        tags=["Organizations"],
+        summary="Update organization",
         request=_UPDATE_ORG_SER,
         responses={
-            200: OpenApiResponse(description="Organisation updated.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization updated.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
         },
     )
     def patch(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Partial-update profile fields on an existing organisation."""
+        """Partial-update profile fields on an existing organization."""
         ser = _UPDATE_ORG_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         result = _UPDATE_ORG_UC(_ORG_REPO()).execute(org_id=org_id, **ser.validated_data)
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.updated",
+            metadata={"org_id": str(org_id)},
+        )
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgMembersView(APIView):
-    """Add a member to an organisation."""
+    """Add a member to an organization."""
 
     permission_classes = [IsOrgAdmin]
 
     @extend_schema(
-        tags=["Organisations"],
+        tags=["Organizations"],
         summary="Add org member",
         request=_ADD_MEMBER_SER,
         responses={
             201: OpenApiResponse(description="Member added.", response=_MEMBER_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             409: OpenApiResponse(description="User is already a member."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Add the given user as a member of this organisation."""
+        """Add the given user as a member of this organization."""
         ser = _ADD_MEMBER_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
@@ -339,54 +352,66 @@ class OrgMembersView(APIView):
             user_id=result.user_id,
             role=result.role,
         )
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.member.added",
+            metadata={"org_id": str(org_id), "member_user_id": str(result.user_id)},
+        )
         return _CREATED(_MEMBER_RESP_SER(result).data, request=request)
 
 
 class OrgApproveView(APIView):
-    """Approve a pending_review organisation (superadmin only)."""
+    """Approve a pending_review organization (superadmin only)."""
 
     permission_classes = [IsSuperAdminFromAllowedIP]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Approve organisation",
+        tags=["Organizations"],
+        summary="Approve organization",
         request=None,
         responses={
-            200: OpenApiResponse(description="Organisation approved.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization approved.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             422: OpenApiResponse(description="Invalid status transition."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Transition the organisation from pending_review to active."""
+        """Transition the organization from pending_review to active."""
         result = _APPROVE_UC(_ORG_REPO()).execute(org_id=org_id)
         OrgEventPublisher().publish_org_approved(
             org_id=result.id,
             org_name=result.name,
             contact_email=result.contact_email,
         )
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.approved",
+            metadata={"org_id": str(result.id)},
+        )
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgRejectView(APIView):
-    """Reject a pending_review organisation (superadmin only)."""
+    """Reject a pending_review organization (superadmin only)."""
 
     permission_classes = [IsSuperAdminFromAllowedIP]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Reject organisation",
+        tags=["Organizations"],
+        summary="Reject organization",
         request=None,
         responses={
-            200: OpenApiResponse(description="Organisation rejected.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization rejected.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             422: OpenApiResponse(description="Invalid status transition."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Transition the organisation from pending_review to suspended."""
+        """Transition the organization from pending_review to suspended."""
         result = _REJECT_UC(_ORG_REPO()).execute(org_id=org_id)
         OrgEventPublisher().publish_org_rejected(
             org_id=result.id,
@@ -394,75 +419,99 @@ class OrgRejectView(APIView):
             reason="",
             contact_email=result.contact_email,
         )
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.rejected",
+            metadata={"org_id": str(result.id)},
+        )
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgSuspendView(APIView):
-    """Suspend an active organisation (superadmin only)."""
+    """Suspend an active organization (superadmin only)."""
 
     permission_classes = [IsSuperAdminFromAllowedIP]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Suspend organisation",
+        tags=["Organizations"],
+        summary="Suspend organization",
         request=None,
         responses={
-            200: OpenApiResponse(description="Organisation suspended.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization suspended.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             422: OpenApiResponse(description="Invalid status transition."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Transition the organisation from active to suspended."""
+        """Transition the organization from active to suspended."""
         result = _SUSPEND_UC(_ORG_REPO()).execute(org_id=org_id)
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.suspended",
+            metadata={"org_id": str(result.id)},
+        )
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgReinstateView(APIView):
-    """Reinstate a suspended organisation (superadmin only)."""
+    """Reinstate a suspended organization (superadmin only)."""
 
     permission_classes = [IsSuperAdminFromAllowedIP]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Reinstate organisation",
+        tags=["Organizations"],
+        summary="Reinstate organization",
         request=None,
         responses={
-            200: OpenApiResponse(description="Organisation reinstated.", response=_ORG_RESP_SER),
+            200: OpenApiResponse(description="Organization reinstated.", response=_ORG_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             422: OpenApiResponse(description="Invalid status transition."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Transition the organisation from suspended to active."""
+        """Transition the organization from suspended to active."""
         result = _REINSTATE_UC(_ORG_REPO()).execute(org_id=org_id)
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.reinstated",
+            metadata={"org_id": str(result.id)},
+        )
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
 class OrgDeleteView(APIView):
-    """Soft-delete an organisation (owner only)."""
+    """Soft-delete an organization (owner only)."""
 
     permission_classes = [IsOrgOwner]
 
     @extend_schema(
-        tags=["Organisations"],
-        summary="Soft-delete organisation",
+        tags=["Organizations"],
+        summary="Soft-delete organization",
         request=None,
         responses={
-            204: OpenApiResponse(description="Organisation deleted."),
+            204: OpenApiResponse(description="Organization deleted."),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
         },
     )
     def delete(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Set deleted_at on the organisation."""
+        """Set deleted_at on the organization."""
         _SOFT_DELETE_UC(_ORG_REPO()).execute(org_id=org_id)
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.deleted",
+            metadata={"org_id": str(org_id)},
+        )
         return Response(status=204)
 
 
-# * organisation document endpoints
+# * organization document endpoints
 
 
 _DOC_RESP_SER = OrgDocumentResponseSerializer
@@ -470,26 +519,26 @@ _UPLOAD_DOC_SER = UploadOrgDocumentSerializer
 
 
 class OrgDocumentListCreateView(APIView):
-    """List or upload documents for an organisation."""
+    """List or upload documents for an organization."""
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Return all documents belonging to the given organisation."""
+        """Return all documents belonging to the given organization."""
         from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
 
-        docs = OrgDocModel.objects.filter(organisation_id=org_id).order_by("-uploaded_at")
+        docs = OrgDocModel.objects.filter(organization_id=org_id).order_by("-uploaded_at")
         return success_response(_DOC_RESP_SER(docs, many=True).data, request=request)
 
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Upload a new document for the given organisation."""
+        """Upload a new document for the given organization."""
         from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
 
         ser = _UPLOAD_DOC_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
         doc = OrgDocModel.objects.create(
-            organisation_id=org_id,
+            organization_id=org_id,
             doc_type=d["doc_type"],
             file_url=d["file_url"],
             file_name=d["file_name"],
@@ -499,7 +548,7 @@ class OrgDocumentListCreateView(APIView):
 
 
 class OrgDocumentDeleteView(APIView):
-    """Delete a single document from an organisation."""
+    """Delete a single document from an organization."""
 
     permission_classes = [IsAuthenticated]
 
@@ -507,12 +556,12 @@ class OrgDocumentDeleteView(APIView):
         """Remove the specified document."""
         from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
 
-        OrgDocModel.objects.filter(id=doc_id, organisation_id=org_id).delete()
+        OrgDocModel.objects.filter(id=doc_id, organization_id=org_id).delete()
         return Response(status=204)
 
 
 class OrgDocumentUploadView(APIView):
-    """POST /organisations/<org_id>/documents/upload/ - upload a real file to MinIO."""
+    """POST /organizations/<org_id>/documents/upload/ - upload a real file to MinIO."""
 
     permission_classes = [IsAuthenticated]
 
@@ -523,7 +572,7 @@ class OrgDocumentUploadView(APIView):
         responses={201: OpenApiResponse(description="Document uploaded and saved.")},
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Upload file to MinIO and save the document record for the organisation."""
+        """Upload file to MinIO and save the document record for the organization."""
         from apps.common.storage import upload_file
         from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
 
@@ -553,7 +602,7 @@ class OrgDocumentUploadView(APIView):
             )
 
         doc = OrgDocModel.objects.create(
-            organisation_id=org_id,
+            organization_id=org_id,
             doc_type=doc_type,
             file_url=file_url,
             file_name=file_obj.name,
@@ -563,7 +612,7 @@ class OrgDocumentUploadView(APIView):
         return created_response(
             {
                 "id": str(doc.id),
-                "org_id": str(doc.organisation_id),
+                "org_id": str(doc.organization_id),
                 "doc_type": doc.doc_type,
                 "file_url": doc.file_url,
                 "file_name": doc.file_name,
@@ -588,11 +637,11 @@ class OrgInviteListCreateView(APIView):
         responses={
             200: OpenApiResponse(description="Pending invite list.", response=_INVITE_RESP_SER(many=True)),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
         },
     )
     def get(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Return all pending invites for the given organisation."""
+        """Return all pending invites for the given organization."""
         invites = _LIST_INVITES_UC(_ORG_REPO(), _INVITE_REPO()).execute(org_id=org_id)
         return success_response(_INVITE_RESP_SER(invites, many=True).data, request=request)
 
@@ -603,12 +652,12 @@ class OrgInviteListCreateView(APIView):
         responses={
             201: OpenApiResponse(description="Invite created.", response=_INVITE_RESP_SER),
             401: OpenApiResponse(description="Missing or invalid JWT."),
-            404: OpenApiResponse(description="Organisation not found."),
+            404: OpenApiResponse(description="Organization not found."),
             409: OpenApiResponse(description="Pending invite already exists for this email."),
         },
     )
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Send an invite to join this organisation."""
+        """Send an invite to join this organization."""
         ser = _CREATE_INVITE_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
@@ -617,6 +666,12 @@ class OrgInviteListCreateView(APIView):
             inviter_id=_UUID(str(request.user.id)),
             invitee_email=d["invitee_email"],
             role=d["role"],
+        )
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.invite.sent",
+            metadata={"org_id": str(org_id), "invitee_email": d["invitee_email"]},
         )
         return _CREATED(_INVITE_RESP_SER(result).data, request=request)
 
@@ -652,6 +707,12 @@ class OrgInviteAcceptView(APIView):
             org_id=result.org_id,
             user_id=user_id,
             role=result.role,
+        )
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.invite.accepted",
+            metadata={"org_id": str(result.org_id)},
         )
         return success_response(_INVITE_RESP_SER(result).data, request=request)
 

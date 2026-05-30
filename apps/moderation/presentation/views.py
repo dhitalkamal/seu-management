@@ -23,6 +23,7 @@ from apps.moderation.presentation.serializers import (
     ModerationStatsSerializer,
     UpdateCaseStatusSerializer,
 )
+from apps.orgs.infrastructure.audit_publisher import publish_audit
 
 _REPO = DjangoModerationCaseRepository
 _CASE_SER = ModerationCaseSerializer
@@ -87,7 +88,13 @@ class ModerationCaseListCreateView(APIView):
             content_title=d["content_title"],
             reason=d["reason"],
             reporter_id=reporter_id,
-            organisation_id=d.get("organisation_id"),
+            organization_id=d.get("organization_id"),
+        )
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="moderation.case.created",
+            metadata={"case_id": str(result.id), "content_type": result.content_type},
         )
         return created_response(_CASE_SER(result).data, request=request)
 
@@ -136,6 +143,12 @@ class ModerationCaseDetailView(APIView):
             status=d["status"],
             reviewer_id=reviewer_id,
             reviewer_notes=d.get("reviewer_notes", ""),
+        )
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="moderation.case.updated",
+            metadata={"case_id": str(case_id), "status": d["status"]},
         )
         return success_response(_CASE_SER(result).data, request=request)
 

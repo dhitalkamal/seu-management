@@ -14,7 +14,7 @@ from apps.community.domain.entities import (
 
 
 class Community(models.Model):
-    """A community group optionally linked to an organisation."""
+    """A community group optionally linked to an organization."""
 
     class Privacy(models.TextChoices):
         PUBLIC = "public", "Public"
@@ -25,7 +25,7 @@ class Community(models.Model):
         db_table = "community_community"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organisation_id = models.UUIDField(null=True, blank=True)
+    organization_id = models.UUIDField(null=True, blank=True)
     created_by = models.UUIDField()
     name = models.CharField(max_length=255)
     slug = models.CharField(max_length=300, unique=True)
@@ -45,7 +45,7 @@ class Community(models.Model):
             privacy=self.privacy,
             member_count=self.member_count,
             created_at=self.created_at,
-            organisation_id=self.organisation_id,
+            organization_id=self.organization_id,
             description=self.description,
             deleted_at=self.deleted_at,
         )
@@ -55,7 +55,7 @@ class Community(models.Model):
         """Build an unsaved ORM instance from a CommunityEntity."""
         return cls(
             id=entity.id,
-            organisation_id=entity.organisation_id,
+            organization_id=entity.organization_id,
             created_by=entity.created_by,
             name=entity.name,
             slug=entity.slug,

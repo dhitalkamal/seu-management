@@ -68,7 +68,7 @@ class OrgEventPublisher:
         """
         Publish an org.member.added event after a new membership is created.
 
-        @param org_id  - the organisation the user joined
+        @param org_id  - the organization the user joined
         @param user_id - the user who was added
         @param role    - the role assigned (owner | admin | manager | member)
         """
@@ -90,7 +90,7 @@ class OrgEventPublisher:
         """
         Publish an org.member.removed event after a membership is deactivated.
 
-        @param org_id  - the organisation the user left
+        @param org_id  - the organization the user left
         @param user_id - the user who was removed
         """
         self._publish(
@@ -112,7 +112,7 @@ class OrgEventPublisher:
         """
         Publish an org.member.role_changed event after a member's role is updated.
 
-        @param org_id   - the organisation the change occurred in
+        @param org_id   - the organization the change occurred in
         @param user_id  - the user whose role changed
         @param old_role - the previous role value
         @param new_role - the new role value
@@ -136,10 +136,10 @@ class OrgEventPublisher:
         contact_email: str,
     ) -> None:
         """
-        Publish an org.created event after a new organisation is persisted.
+        Publish an org.created event after a new organization is persisted.
 
-        @param org_id         - the new organisation's UUID
-        @param org_name       - the human-readable name of the organisation
+        @param org_id         - the new organization's UUID
+        @param org_name       - the human-readable name of the organization
         @param creator_id     - UUID of the user who created it
         @param contact_email  - primary contact email, forwarded to notification-service
         """
@@ -161,10 +161,10 @@ class OrgEventPublisher:
         contact_email: str,
     ) -> None:
         """
-        Publish an org.approved event after a superadmin approves the organisation.
+        Publish an org.approved event after a superadmin approves the organization.
 
-        @param org_id         - the approved organisation's UUID
-        @param org_name       - the human-readable name of the organisation
+        @param org_id         - the approved organization's UUID
+        @param org_name       - the human-readable name of the organization
         @param contact_email  - primary contact email, forwarded to notification-service
         """
         self._publish(
@@ -185,10 +185,10 @@ class OrgEventPublisher:
         contact_email: str = "",
     ) -> None:
         """
-        Publish an org.rejected event after a superadmin rejects the organisation.
+        Publish an org.rejected event after a superadmin rejects the organization.
 
-        @param org_id         - the rejected organisation's UUID
-        @param org_name       - the human-readable name of the organisation
+        @param org_id         - the rejected organization's UUID
+        @param org_name       - the human-readable name of the organization
         @param reason         - free-text reason for rejection shown to the org owner
         @param contact_email  - primary contact email, forwarded to notification-service
         """

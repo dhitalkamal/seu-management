@@ -1,4 +1,4 @@
-"""Use case: revoke a pending organisation invite (inviter or admin action)."""
+"""Use case: revoke a pending organization invite (inviter or admin action)."""
 
 from __future__ import annotations
 

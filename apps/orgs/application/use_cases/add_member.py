@@ -1,4 +1,4 @@
-"""Use case: add a user to an organisation with a given role."""
+"""Use case: add a user to an organization with a given role."""
 
 from __future__ import annotations
 
@@ -7,15 +7,15 @@ from datetime import datetime, timezone
 
 from apps.orgs.domain.entities import OrgMemberEntity
 from apps.orgs.domain.exceptions import MemberAlreadyExistsError
-from apps.orgs.domain.repositories import IOrganisationRepository, IOrgMemberRepository
+from apps.orgs.domain.repositories import IOrganizationRepository, IOrgMemberRepository
 
 
 class AddOrgMemberUseCase:
-    """Add a new active membership to an organisation."""
+    """Add a new active membership to an organization."""
 
     def __init__(
         self,
-        org_repo: IOrganisationRepository,
+        org_repo: IOrganizationRepository,
         member_repo: IOrgMemberRepository,
     ) -> None:
         self._orgs = org_repo
@@ -31,7 +31,7 @@ class AddOrgMemberUseCase:
         """
         Verify the org exists and the user is not already a member, then create the membership.
 
-        @param org_id - the organisation to join
+        @param org_id - the organization to join
         @param user_id - the user to add
         @param role - owner | admin | manager | member
         @returns the new OrgMemberEntity
@@ -41,11 +41,11 @@ class AddOrgMemberUseCase:
         self._orgs.get_by_id(org_id)
 
         if self._members.exists(org_id, user_id):
-            raise MemberAlreadyExistsError("This user is already a member of the organisation.")
+            raise MemberAlreadyExistsError("This user is already a member of the organization.")
 
         member = OrgMemberEntity(
             id=uuid.uuid4(),
-            organisation_id=org_id,
+            organization_id=org_id,
             user_id=user_id,
             role=role,
             is_active=True,

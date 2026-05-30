@@ -1,17 +1,17 @@
-"""Use case: list all organisations the given user is a member of."""
+"""Use case: list all organizations the given user is a member of."""
 
 from __future__ import annotations
 
 import uuid
 
 from apps.orgs.domain.entities import OrgEntity
-from apps.orgs.domain.repositories import IOrganisationRepository
+from apps.orgs.domain.repositories import IOrganizationRepository
 
 
-class ListOrganisationsUseCase:
-    """Return all non-deleted organisations the user belongs to."""
+class ListOrganizationsUseCase:
+    """Return all non-deleted organizations the user belongs to."""
 
-    def __init__(self, org_repo: IOrganisationRepository) -> None:
+    def __init__(self, org_repo: IOrganizationRepository) -> None:
         self._orgs = org_repo
 
     def execute(self, *, user_id: uuid.UUID) -> list[OrgEntity]:

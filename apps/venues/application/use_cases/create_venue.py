@@ -11,7 +11,7 @@ from apps.venues.infrastructure.geocoder import geocode_address
 
 
 class CreateVenueUseCase:
-    """Create and persist a new venue for an organisation."""
+    """Create and persist a new venue for an organization."""
 
     def __init__(self, repo: IVenueRepository) -> None:
         self._repo = repo
@@ -19,7 +19,7 @@ class CreateVenueUseCase:
     def execute(
         self,
         *,
-        organisation_id: uuid.UUID,
+        organization_id: uuid.UUID,
         created_by: uuid.UUID,
         name: str,
         address: str,
@@ -36,7 +36,7 @@ class CreateVenueUseCase:
 
         venue = VenueEntity(
             id=uuid.uuid4(),
-            organisation_id=organisation_id,
+            organization_id=organization_id,
             created_by=created_by,
             name=name,
             address=address,

@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                         default=uuid.uuid4, editable=False, primary_key=True, serialize=False
                     ),
                 ),
-                ("organisation_id", models.UUIDField(blank=True, null=True)),
+                ("organization_id", models.UUIDField(blank=True, null=True)),
                 ("created_by", models.UUIDField()),
                 ("name", models.CharField(max_length=255)),
                 ("slug", models.CharField(max_length=300, unique=True)),

@@ -16,7 +16,7 @@ def test_create_venue_geocodes_address_when_key_configured():
     with patch("apps.venues.application.use_cases.create_venue.geocode_address") as mock_geo:
         mock_geo.return_value = (27.7172, 85.3240)
         result = CreateVenueUseCase(repo).execute(
-            organisation_id=uuid.uuid4(),
+            organization_id=uuid.uuid4(),
             created_by=uuid.uuid4(),
             name="Grand Hall",
             address="Thamel",
@@ -36,7 +36,7 @@ def test_create_venue_geocode_returns_none_leaves_coords_null():
     with patch("apps.venues.application.use_cases.create_venue.geocode_address") as mock_geo:
         mock_geo.return_value = None
         result = CreateVenueUseCase(repo).execute(
-            organisation_id=uuid.uuid4(),
+            organization_id=uuid.uuid4(),
             created_by=uuid.uuid4(),
             name="Grand Hall",
             address="Unknown Place",

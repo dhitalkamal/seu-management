@@ -16,7 +16,7 @@ class ModerationCaseEntity:
     content_id: uuid.UUID
     content_title: str
     reporter_id: uuid.UUID | None
-    organisation_id: uuid.UUID | None
+    organization_id: uuid.UUID | None
     reason: str
     # pending -> under_review -> dismissed | warned | taken_down
     status: str

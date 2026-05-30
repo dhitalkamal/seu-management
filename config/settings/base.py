@@ -126,7 +126,7 @@ CACHES = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": f"{SERVICE_NAME} API",
-    "DESCRIPTION": "Organisation, venue, volunteer, community, and marketing service for the Sansaar platform.",
+    "DESCRIPTION": "Organization, venue, volunteer, community, and marketing service for the Sansaar platform.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],

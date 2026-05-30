@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.common.api.responses import created_response, success_response
+from apps.orgs.infrastructure.audit_publisher import publish_audit
 from apps.volunteers.application.use_cases.apply_to_role import ApplyToVolunteerRoleUseCase
 from apps.volunteers.application.use_cases.approve_application import ApproveApplicationUseCase
 from apps.volunteers.application.use_cases.cancel_application import CancelApplicationUseCase
@@ -127,7 +128,13 @@ class VolunteerRoleView(APIView):
             name=d["name"],
             description=d["description"],
             capacity=d["capacity"],
-            organisation_id=d["organisation_id"],
+            organization_id=d["organization_id"],
+        )
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="volunteer.role.created",
+            metadata={"role_id": str(result.id), "role_name": result.name},
         )
         return _CREATED(_ROLE_RESP_SER(result).data, request=request)
 
@@ -156,6 +163,12 @@ class VolunteerRoleApplyView(APIView):
             role_id=role_id,
             user_id=_UUID(str(request.user.id)),  # type: ignore[union-attr]
             event_id=ser.validated_data["event_id"],
+        )
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="volunteer.application.submitted",
+            metadata={"role_id": str(role_id), "application_id": str(result.id)},
         )
         return _CREATED(_APP_RESP_SER(result).data, request=request)
 
@@ -197,6 +210,12 @@ class VolunteerApplicationApproveView(APIView):
     def post(self, request: Request, application_id: uuid.UUID) -> Response:
         """Set application status to approved and notify participation-service."""
         result = _APPROVE_UC(_APP_REPO(), _get_publisher()).execute(application_id=application_id)
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="volunteer.application.approved",
+            metadata={"application_id": str(application_id)},
+        )
         return success_response(_APP_RESP_SER(result).data, request=request)
 
 
@@ -218,6 +237,12 @@ class VolunteerApplicationRejectView(APIView):
     def post(self, request: Request, application_id: uuid.UUID) -> Response:
         """Set application status to rejected."""
         result = _REJECT_UC(_APP_REPO()).execute(application_id=application_id)
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="volunteer.application.rejected",
+            metadata={"application_id": str(application_id)},
+        )
         return success_response(_APP_RESP_SER(result).data, request=request)
 
 
@@ -392,6 +417,12 @@ class VolunteerShiftCreateView(APIView):
             capacity=d["capacity"],
             location=d["location"],
             description=d["description"],
+        )
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="volunteer.shift.created",
+            metadata={"role_id": str(role_id), "shift_id": str(result.id)},
         )
         return _CREATED(_SHIFT_RESP_SER(result).data, request=request)
 

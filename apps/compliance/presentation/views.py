@@ -18,6 +18,7 @@ from apps.compliance.presentation.serializers import (
     ComplianceControlPatchSerializer,
     ComplianceControlResponseSerializer,
 )
+from apps.orgs.infrastructure.audit_publisher import publish_audit
 
 _RESP = ComplianceControlResponseSerializer
 
@@ -79,6 +80,12 @@ class ComplianceControlListCreateView(APIView):
             status=d["status"],
             last_checked=d.get("last_checked"),
         )
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="compliance.control.created",
+            metadata={"control_id": str(control.id), "control_name": control.name},
+        )
         return created_response(_serialize_control(control), request=request)
 
 
@@ -120,6 +127,12 @@ class ComplianceControlDetailView(APIView):
                 update_fields.append(field)
         if update_fields:
             control.save(update_fields=update_fields)
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="compliance.control.updated",
+            metadata={"control_id": str(control_id)},
+        )
         return success_response(_serialize_control(control), request=request)
 
     @extend_schema(

@@ -72,7 +72,7 @@ class MarketingEventPublisher:
         @param campaign_id  - the sent campaign's UUID
         @param subject      - email subject line
         @param body         - HTML email body
-        @param org_id       - the owning organisation's UUID (None for system campaigns)
+        @param org_id       - the owning organization's UUID (None for system campaigns)
         @param segment_id   - the audience segment's UUID (None when audience is all)
         @param user_emails  - resolved list of recipient email addresses
         """

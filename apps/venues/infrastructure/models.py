@@ -10,13 +10,13 @@ from apps.venues.domain.entities import VenueBookingEntity, VenueEntity, VenueSp
 
 
 class Venue(models.Model):
-    """A physical venue owned by an organisation."""
+    """A physical venue owned by an organization."""
 
     class Meta:
         db_table = "venues_venue"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organisation_id = models.UUIDField()
+    organization_id = models.UUIDField()
     created_by = models.UUIDField()
     name = models.CharField(max_length=255)
     address = models.CharField(max_length=500)
@@ -35,7 +35,7 @@ class Venue(models.Model):
         """Map this ORM row to a pure-Python VenueEntity."""
         return VenueEntity(
             id=self.id,
-            organisation_id=self.organisation_id,
+            organization_id=self.organization_id,
             created_by=self.created_by,
             name=self.name,
             address=self.address,
@@ -55,7 +55,7 @@ class Venue(models.Model):
         """Build an unsaved ORM instance from a VenueEntity."""
         return cls(
             id=entity.id,
-            organisation_id=entity.organisation_id,
+            organization_id=entity.organization_id,
             created_by=entity.created_by,
             name=entity.name,
             address=entity.address,

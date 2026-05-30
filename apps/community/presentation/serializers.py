@@ -12,7 +12,7 @@ class CreateCommunitySerializer(serializers.Serializer):
     slug = serializers.CharField(max_length=300)
     privacy = serializers.ChoiceField(choices=["public", "private", "secret"], default="public")
     description = serializers.CharField(required=False, allow_blank=True, default="")
-    organisation_id = serializers.UUIDField(required=False, allow_null=True, default=None)
+    organization_id = serializers.UUIDField(required=False, allow_null=True, default=None)
 
 
 class CommunityResponseSerializer(serializers.Serializer):
@@ -24,7 +24,7 @@ class CommunityResponseSerializer(serializers.Serializer):
     description = serializers.CharField()
     privacy = serializers.CharField()
     member_count = serializers.IntegerField()
-    organisation_id = serializers.UUIDField(allow_null=True)
+    organization_id = serializers.UUIDField(allow_null=True)
     created_by = serializers.UUIDField()
     created_at = serializers.DateTimeField()
 

@@ -22,7 +22,7 @@ class CreateVolunteerRoleUseCase:
         name: str,
         description: str = "",
         capacity: int = 1,
-        organisation_id: uuid.UUID | None = None,
+        organization_id: uuid.UUID | None = None,
     ) -> VolunteerRoleEntity:
         """
         Create and persist a volunteer role.
@@ -31,7 +31,7 @@ class CreateVolunteerRoleUseCase:
         @param name - role title
         @param description - optional description
         @param capacity - maximum number of volunteers, defaults to 1
-        @param organisation_id - optional owning organisation
+        @param organization_id - optional owning organization
         @returns the persisted VolunteerRoleEntity
         """
         role = VolunteerRoleEntity(
@@ -42,6 +42,6 @@ class CreateVolunteerRoleUseCase:
             capacity=capacity,
             is_active=True,
             created_at=datetime.now(timezone.utc),
-            organisation_id=organisation_id,
+            organization_id=organization_id,
         )
         return self._roles.create(role)

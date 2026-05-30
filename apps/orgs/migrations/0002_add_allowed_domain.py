@@ -19,11 +19,11 @@ class Migration(migrations.Migration):
             fields=[
                 ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True)),
                 (
-                    "organisation",
+                    "organization",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="allowed_domains",
-                        to="orgs.organisation",
+                        to="orgs.organization",
                     ),
                 ),
                 ("domain", models.CharField(max_length=253)),
@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="alloweddomain",
             constraint=models.UniqueConstraint(
-                fields=["organisation", "domain"],
+                fields=["organization", "domain"],
                 name="unique_org_allowed_domain",
             ),
         ),

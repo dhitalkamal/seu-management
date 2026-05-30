@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from apps.orgs.application.use_cases.approve_org import ApproveOrganisationUseCase
-from apps.orgs.application.use_cases.reject_org import RejectOrganisationUseCase
+from apps.orgs.application.use_cases.approve_org import ApproveOrganizationUseCase
+from apps.orgs.application.use_cases.reject_org import RejectOrganizationUseCase
 from apps.orgs.tests.unit.fakes import FakeOrgRepository, make_org
 
 
@@ -19,7 +19,7 @@ def test_approve_sets_reviewed_at():
     repo = FakeOrgRepository([org])
 
     before = _now()
-    result = ApproveOrganisationUseCase(repo).execute(org_id=org.id)
+    result = ApproveOrganizationUseCase(repo).execute(org_id=org.id)
     after = _now()
 
     assert result.reviewed_at is not None
@@ -34,7 +34,7 @@ def test_approve_sets_reviewed_by_when_provided():
     repo = FakeOrgRepository([org])
     reviewer = uuid.uuid4()
 
-    result = ApproveOrganisationUseCase(repo).execute(org_id=org.id, reviewed_by=reviewer)
+    result = ApproveOrganizationUseCase(repo).execute(org_id=org.id, reviewed_by=reviewer)
 
     assert result.reviewed_by == reviewer
 
@@ -44,7 +44,7 @@ def test_approve_reviewed_by_defaults_to_none():
     org = make_org(status="pending_review")
     repo = FakeOrgRepository([org])
 
-    result = ApproveOrganisationUseCase(repo).execute(org_id=org.id)
+    result = ApproveOrganizationUseCase(repo).execute(org_id=org.id)
 
     assert result.reviewed_by is None
 
@@ -55,7 +55,7 @@ def test_reject_sets_reviewed_at():
     repo = FakeOrgRepository([org])
 
     before = _now()
-    result = RejectOrganisationUseCase(repo).execute(org_id=org.id)
+    result = RejectOrganizationUseCase(repo).execute(org_id=org.id)
     after = _now()
 
     assert result.reviewed_at is not None
@@ -70,6 +70,6 @@ def test_reject_sets_reviewed_by_when_provided():
     repo = FakeOrgRepository([org])
     reviewer = uuid.uuid4()
 
-    result = RejectOrganisationUseCase(repo).execute(org_id=org.id, reviewed_by=reviewer)
+    result = RejectOrganizationUseCase(repo).execute(org_id=org.id, reviewed_by=reviewer)
 
     assert result.reviewed_by == reviewer

@@ -6,7 +6,7 @@ from rest_framework import serializers
 
 
 class CreateOrgSerializer(serializers.Serializer):
-    """Payload for creating a new organisation."""
+    """Payload for creating a new organization."""
 
     name = serializers.CharField(max_length=255)
     slug = serializers.SlugField(max_length=100)
@@ -30,7 +30,7 @@ class CreateOrgSerializer(serializers.Serializer):
 
 
 class OrgResponseSerializer(serializers.Serializer):
-    """Public shape of an organisation resource."""
+    """Public shape of an organization resource."""
 
     id = serializers.UUIDField()
     created_by = serializers.UUIDField()
@@ -80,7 +80,7 @@ class UpdateOrgSerializer(serializers.Serializer):
 
 
 class AddMemberSerializer(serializers.Serializer):
-    """Payload for adding a member to an organisation."""
+    """Payload for adding a member to an organization."""
 
     user_id = serializers.UUIDField()
     role = serializers.ChoiceField(choices=["owner", "admin", "manager", "member"])
@@ -90,7 +90,7 @@ class OrgMemberResponseSerializer(serializers.Serializer):
     """Public shape of an org membership resource."""
 
     id = serializers.UUIDField()
-    organisation_id = serializers.UUIDField()
+    organization_id = serializers.UUIDField()
     user_id = serializers.UUIDField()
     role = serializers.CharField()
     is_active = serializers.BooleanField()
@@ -98,10 +98,10 @@ class OrgMemberResponseSerializer(serializers.Serializer):
 
 
 class OrgDocumentResponseSerializer(serializers.Serializer):
-    """Public shape of an organisation document resource."""
+    """Public shape of an organization document resource."""
 
     id = serializers.UUIDField()
-    organisation_id = serializers.UUIDField(source="organisation.id")
+    organization_id = serializers.UUIDField(source="organization.id")
     doc_type = serializers.CharField()
     file_url = serializers.URLField()
     file_name = serializers.CharField()
@@ -110,7 +110,7 @@ class OrgDocumentResponseSerializer(serializers.Serializer):
 
 
 class UploadOrgDocumentSerializer(serializers.Serializer):
-    """Payload for uploading a document to an organisation."""
+    """Payload for uploading a document to an organization."""
 
     doc_type = serializers.ChoiceField(
         choices=["registration_cert", "pan_card", "tax_clearance", "logo", "other"],
@@ -121,20 +121,20 @@ class UploadOrgDocumentSerializer(serializers.Serializer):
 
 
 class CreateInviteSerializer(serializers.Serializer):
-    """Payload for inviting a user to an organisation."""
+    """Payload for inviting a user to an organization."""
 
     invitee_email = serializers.EmailField()
     role = serializers.ChoiceField(choices=["owner", "admin", "manager", "member"])
 
 
 class AcceptInviteSerializer(serializers.Serializer):
-    """Payload for accepting an organisation invite."""
+    """Payload for accepting an organization invite."""
 
     user_id = serializers.UUIDField()
 
 
 class OrgInviteResponseSerializer(serializers.Serializer):
-    """Public shape of an organisation invite resource."""
+    """Public shape of an organization invite resource."""
 
     id = serializers.UUIDField()
     org_id = serializers.UUIDField()

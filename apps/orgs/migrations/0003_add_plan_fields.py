@@ -1,4 +1,4 @@
-"""Migration: add plan and plan_expires_at to Organisation for subscription billing."""
+"""Migration: add plan and plan_expires_at to Organization for subscription billing."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="plan",
             field=models.CharField(
                 max_length=20,
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name="organisation",
+            model_name="organization",
             name="plan_expires_at",
             field=models.DateTimeField(null=True, blank=True),
         ),

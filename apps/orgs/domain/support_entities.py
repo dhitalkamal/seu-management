@@ -9,7 +9,7 @@ from datetime import datetime
 
 @dataclass(slots=True)
 class SupportTicketEntity:
-    """A support ticket submitted by or on behalf of an organisation."""
+    """A support ticket submitted by or on behalf of an organization."""
 
     id: uuid.UUID
     subject: str

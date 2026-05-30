@@ -11,6 +11,6 @@ class ListTicketsUseCase:
     def __init__(self, repo: object) -> None:
         self._repo = repo
 
-    def execute(self) -> list[SupportTicketEntity]:
-        """Fetch all tickets."""
-        return self._repo.list_all()
+    def execute(self, submitted_by: object = None) -> list[SupportTicketEntity]:
+        """Fetch all tickets, or only those by a specific user."""
+        return self._repo.list_all(submitted_by=submitted_by)

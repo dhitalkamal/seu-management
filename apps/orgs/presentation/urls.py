@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.urls import URLPattern, path
 
-from .internal_views import InternalOrgRolesView
+from .internal_views import InternalOrgPlanView, InternalOrgRolesView
 from .views import (
     OrgApproveView,
     OrgDeleteView,
@@ -49,5 +49,10 @@ urlpatterns: list[URLPattern] = [
         "internal/users/<uuid:user_id>/org-roles/",
         InternalOrgRolesView.as_view(),
         name="internal-org-roles",
+    ),
+    path(
+        "internal/orgs/<uuid:org_id>/plan/",
+        InternalOrgPlanView.as_view(),
+        name="internal-org-plan",
     ),
 ]

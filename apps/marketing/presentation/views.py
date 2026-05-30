@@ -28,6 +28,7 @@ from apps.marketing.presentation.serializers import (
     CreateSegmentSerializer,
     SegmentResponseSerializer,
 )
+from apps.orgs.infrastructure.audit_publisher import publish_audit
 
 _CREATED = created_response
 _CAMPAIGN_REPO = DjangoCampaignRepository
@@ -71,6 +72,12 @@ class CampaignListCreateView(APIView):
             subject=d["subject"],
             body=d["body"],
             segment_id=d.get("segment_id"),
+        )
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="campaign.created",
+            metadata={"campaign_id": str(campaign.id), "campaign_name": campaign.name},
         )
         return _CREATED(CampaignResponseSerializer(campaign).data, request=request)
 
@@ -129,6 +136,12 @@ class CampaignSendView(APIView):
                 http_status=400,
                 request=request,
             )
+        publish_audit(
+            request=request,
+            user_id=uuid.UUID(str(request.user.id)),
+            event_type="campaign.sent",
+            metadata={"campaign_id": str(campaign_id)},
+        )
         return success_response(CampaignResponseSerializer(campaign).data, request=request)
 
 

@@ -36,7 +36,7 @@ class ModerationCase(models.Model):
     content_id = models.UUIDField()
     content_title = models.CharField(max_length=500)
     reporter_id = models.UUIDField(null=True, blank=True)
-    organisation_id = models.UUIDField(null=True, blank=True)
+    organization_id = models.UUIDField(null=True, blank=True)
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     reviewer_id = models.UUIDField(null=True, blank=True)
@@ -52,7 +52,7 @@ class ModerationCase(models.Model):
             content_id=self.content_id,
             content_title=self.content_title,
             reporter_id=self.reporter_id,
-            organisation_id=self.organisation_id,
+            organization_id=self.organization_id,
             reason=self.reason,
             status=self.status,
             reviewer_id=self.reviewer_id,
@@ -70,7 +70,7 @@ class ModerationCase(models.Model):
             content_id=entity.content_id,
             content_title=entity.content_title,
             reporter_id=entity.reporter_id,
-            organisation_id=entity.organisation_id,
+            organization_id=entity.organization_id,
             reason=entity.reason,
             status=entity.status,
             reviewer_id=entity.reviewer_id,

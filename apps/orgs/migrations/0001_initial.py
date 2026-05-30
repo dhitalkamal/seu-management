@@ -1,4 +1,4 @@
-"""Create organisations and org_members tables."""
+"""Create organizations and org_members tables."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Organisation",
+            name="Organization",
             fields=[
                 (
                     "id",
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
-            options={"db_table": "orgs_organisation"},
+            options={"db_table": "orgs_organization"},
         ),
         migrations.CreateModel(
             name="OrgMember",
@@ -62,11 +62,11 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "organisation",
+                    "organization",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="members",
-                        to="orgs.organisation",
+                        to="orgs.organization",
                     ),
                 ),
                 ("user_id", models.UUIDField()),
@@ -91,7 +91,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="orgmember",
             constraint=models.UniqueConstraint(
-                fields=["organisation", "user_id"],
+                fields=["organization", "user_id"],
                 name="unique_org_member",
             ),
         ),

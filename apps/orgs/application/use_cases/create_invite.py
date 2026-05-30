@@ -1,4 +1,4 @@
-"""Use case: create a pending invitation for a user to join an organisation."""
+"""Use case: create a pending invitation for a user to join an organization."""
 
 from __future__ import annotations
 
@@ -7,18 +7,18 @@ from datetime import datetime, timedelta, timezone
 
 from apps.orgs.domain.entities import OrgInviteEntity
 from apps.orgs.domain.exceptions import InviteAlreadyExistsError
-from apps.orgs.domain.repositories import IOrganisationRepository, IOrgInviteRepository
+from apps.orgs.domain.repositories import IOrganizationRepository, IOrgInviteRepository
 
 # invites expire after 7 days
 _INVITE_TTL_DAYS = 7
 
 
 class CreateInviteUseCase:
-    """Send an invitation to an email address to join an organisation."""
+    """Send an invitation to an email address to join an organization."""
 
     def __init__(
         self,
-        org_repo: IOrganisationRepository,
+        org_repo: IOrganizationRepository,
         invite_repo: IOrgInviteRepository,
     ) -> None:
         self._orgs = org_repo
@@ -35,7 +35,7 @@ class CreateInviteUseCase:
         """
         Verify the org exists, guard against duplicate pending invites, then persist.
 
-        @param org_id - target organisation
+        @param org_id - target organization
         @param inviter_id - user sending the invite
         @param invitee_email - recipient email address
         @param role - role the invitee will receive on acceptance
@@ -47,7 +47,7 @@ class CreateInviteUseCase:
 
         existing = self._invites.get_pending_by_email(org_id, invitee_email)
         if existing is not None:
-            raise InviteAlreadyExistsError(f"A pending invite for {invitee_email} already exists for this organisation.")
+            raise InviteAlreadyExistsError(f"A pending invite for {invitee_email} already exists for this organization.")
 
         now = datetime.now(timezone.utc)
         invite = OrgInviteEntity(

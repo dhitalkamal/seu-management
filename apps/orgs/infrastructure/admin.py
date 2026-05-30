@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from django.contrib import admin
 
-from apps.orgs.infrastructure.models import Organisation, OrgMember
+from apps.orgs.infrastructure.models import Organization, OrgMember
 
-admin.site.register(Organisation)
+admin.site.register(Organization)
 admin.site.register(OrgMember)

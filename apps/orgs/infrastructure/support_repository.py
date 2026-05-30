@@ -11,9 +11,12 @@ from apps.orgs.infrastructure.support_models import SupportTicket
 class DjangoSupportTicketRepository:
     """CRUD operations for SupportTicket backed by Django ORM."""
 
-    def list_all(self) -> list[SupportTicketEntity]:
-        """Return all tickets ordered by created_at descending."""
-        return [t.to_entity() for t in SupportTicket.objects.all()]
+    def list_all(self, submitted_by: uuid.UUID | None = None) -> list[SupportTicketEntity]:
+        """Return tickets ordered by created_at descending, optionally filtered by submitter."""
+        qs = SupportTicket.objects.all()
+        if submitted_by is not None:
+            qs = qs.filter(submitted_by=submitted_by)
+        return [t.to_entity() for t in qs]
 
     def get(self, ticket_id: uuid.UUID) -> SupportTicketEntity:
         """Raise DoesNotExist if ticket not found."""

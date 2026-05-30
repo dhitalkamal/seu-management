@@ -13,12 +13,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name='organisation',
+            model_name='organization',
             name='reviewed_at',
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='organisation',
+            model_name='organization',
             name='reviewed_by',
             field=models.UUIDField(blank=True, null=True),
         ),

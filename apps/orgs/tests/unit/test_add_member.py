@@ -25,7 +25,7 @@ def test_add_member_creates_membership():
     org = make_org()
     user_id = uuid.uuid4()
     result = _uc(orgs=[org]).execute(org_id=org.id, user_id=user_id, role="member")
-    assert result.organisation_id == org.id
+    assert result.organization_id == org.id
     assert result.user_id == user_id
     assert result.role == "member"
     assert result.is_active is True
@@ -37,7 +37,7 @@ def test_add_member_duplicate_raises():
     user_id = uuid.uuid4()
     existing = OrgMemberEntity(
         id=uuid.uuid4(),
-        organisation_id=org.id,
+        organization_id=org.id,
         user_id=user_id,
         role="member",
         is_active=True,

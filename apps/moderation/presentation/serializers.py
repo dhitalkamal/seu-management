@@ -13,7 +13,7 @@ class ModerationCaseSerializer(serializers.Serializer):
     content_id = serializers.UUIDField()
     content_title = serializers.CharField()
     reporter_id = serializers.UUIDField(allow_null=True)
-    organisation_id = serializers.UUIDField(allow_null=True)
+    organization_id = serializers.UUIDField(allow_null=True)
     reason = serializers.CharField()
     status = serializers.CharField()
     reviewer_id = serializers.UUIDField(allow_null=True)
@@ -29,7 +29,7 @@ class CreateModerationCaseSerializer(serializers.Serializer):
     content_id = serializers.UUIDField()
     content_title = serializers.CharField(max_length=500)
     reason = serializers.CharField()
-    organisation_id = serializers.UUIDField(required=False, allow_null=True, default=None)
+    organization_id = serializers.UUIDField(required=False, allow_null=True, default=None)
 
 
 class UpdateCaseStatusSerializer(serializers.Serializer):

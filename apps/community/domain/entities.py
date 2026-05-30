@@ -9,7 +9,7 @@ from datetime import datetime
 
 @dataclass(slots=True)
 class CommunityEntity:
-    """A community group optionally linked to an organisation."""
+    """A community group optionally linked to an organization."""
 
     id: uuid.UUID
     created_by: uuid.UUID
@@ -18,7 +18,7 @@ class CommunityEntity:
     privacy: str
     member_count: int
     created_at: datetime
-    organisation_id: uuid.UUID | None = None
+    organization_id: uuid.UUID | None = None
     description: str = ""
     deleted_at: datetime | None = None
 

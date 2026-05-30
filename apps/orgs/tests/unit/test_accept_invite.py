@@ -76,7 +76,7 @@ class FakeMemberRepo(IOrgMemberRepository):
         return entity
 
     def exists(self, org_id: uuid.UUID, user_id: uuid.UUID) -> bool:
-        return any(m.organisation_id == org_id and m.user_id == user_id and m.is_active for m in self._store.values())
+        return any(m.organization_id == org_id and m.user_id == user_id and m.is_active for m in self._store.values())
 
 
 def test_accept_invite_creates_membership_and_marks_accepted() -> None:

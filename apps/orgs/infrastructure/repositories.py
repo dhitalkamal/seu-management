@@ -69,6 +69,10 @@ class DjangoOrgRepository(IOrganisationRepository):
         org_ids = OrgMember.objects.filter(user_id=user_id, is_active=True).values_list("organisation_id", flat=True)
         return [obj.to_entity() for obj in Organisation.objects.filter(id__in=org_ids, deleted_at__isnull=True).order_by("-created_at")]
 
+    def list_all(self) -> list[OrgEntity]:
+        """Return all non-deleted orgs (superadmin use)."""
+        return [obj.to_entity() for obj in Organisation.objects.filter(deleted_at__isnull=True).order_by("-created_at")]
+
 
 class DjangoOrgMemberRepository(IOrgMemberRepository):
     """Persists OrgMember entities using the Django ORM."""

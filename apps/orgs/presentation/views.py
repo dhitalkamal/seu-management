@@ -201,9 +201,13 @@ class OrgListCreateView(APIView):
         responses={200: OpenApiResponse(description="Paginated org list.", response=_ORG_RESP_SER(many=True))},
     )
     def get(self, request: Request) -> Response:
-        """Return orgs where the authenticated user is an active member."""
-        user_id = _UUID(str(request.user.id))
-        orgs = _LIST_ORGS_UC(_ORG_REPO()).execute(user_id=user_id)
+        """Return orgs where the user is a member, or all orgs for staff/superadmin."""
+        is_staff = getattr(request.user, "is_staff", False)
+        if is_staff:
+            orgs = _ORG_REPO().list_all()
+        else:
+            user_id = _UUID(str(request.user.id))
+            orgs = _LIST_ORGS_UC(_ORG_REPO()).execute(user_id=user_id)
         paginator = _PAGINATION()
         page = paginator.paginate_queryset(orgs, request)
         return paginator.get_paginated_response(_ORG_RESP_SER(page, many=True).data)

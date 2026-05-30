@@ -21,7 +21,11 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "django-stubs>=6.0.4",
+    "djangorestframework-stubs>=3.17.0",
+    "mypy>=2.1.0",
     "pytest>=8.0",
+    "pytest-cov>=7.1.0",
     "pytest-django>=4.8",
     "ruff>=0.9",
 ]
@@ -43,6 +47,10 @@ select = ["E", "F", "I", "N", "W"]
 [tool.mypy]
 python_version = "3.13"
 ignore_missing_imports = true
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.development"
 
 [[tool.mypy.overrides]]
 module = ["apps.*.infrastructure.models", "apps.*.infrastructure.support_models", "apps.compliance.models"]

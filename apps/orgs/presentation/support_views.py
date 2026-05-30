@@ -125,7 +125,7 @@ class OrgAnalyticsView(APIView):
 
         from datetime import datetime, timedelta, timezone
 
-        from django.db.models import Avg, Count, ExpressionWrapper, F, FloatField
+        from django.db.models import Count
         from django.db.models.functions import TruncMonth
 
         from apps.orgs.infrastructure.models import Organization
@@ -170,18 +170,17 @@ class OrgAnalyticsView(APIView):
             key = dt.strftime("%Y-%m")
             org_monthly_series.append(month_map.get(key, 0))
 
-        # * average hours between org creation and review decision, for reviewed orgs only
-        avg_seconds_result = Organization.objects.filter(reviewed_at__isnull=False).aggregate(
-            avg_seconds=Avg(
-                ExpressionWrapper(
-                    F("reviewed_at") - F("created_at"),
-                    output_field=FloatField(),
-                )
-            )
-        )
-        avg_seconds = avg_seconds_result["avg_seconds"] or 0.0
-        # postgres returns the duration in microseconds when using ExpressionWrapper on datetimes
-        avg_review_hours = round(avg_seconds / 3_600_000_000, 1) if avg_seconds else 0.0
+        # average hours between org creation and review decision
+        reviewed_orgs = Organization.objects.filter(reviewed_at__isnull=False)
+        avg_review_hours = 0.0
+        if reviewed_orgs.exists():
+            total_hours = 0.0
+            count = 0
+            for org in reviewed_orgs:
+                delta = org.reviewed_at - org.created_at
+                total_hours += delta.total_seconds() / 3600
+                count += 1
+            avg_review_hours = round(total_hours / count, 1) if count else 0.0
 
         return success_response(
             {

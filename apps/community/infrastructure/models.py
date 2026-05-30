@@ -22,7 +22,7 @@ class Community(models.Model):
         SECRET = "secret", "Secret"
 
     class Meta:
-        db_table = '"community"."community"'
+        db_table = "community_community"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation_id = models.UUIDField(null=True, blank=True)
@@ -70,7 +70,7 @@ class CommunityMember(models.Model):
     """A membership record linking a user to a community."""
 
     class Meta:
-        db_table = '"community"."community_member"'
+        db_table = "community_community_member"
         constraints = [models.UniqueConstraint(fields=["community", "user_id"], name="unique_community_member")]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -114,7 +114,7 @@ class CommunityPost(models.Model):
         REMOVED = "removed", "Removed"
 
     class Meta:
-        db_table = '"community"."community_post"'
+        db_table = "community_community_post"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="posts")

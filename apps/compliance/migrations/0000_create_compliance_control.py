@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                "db_table": '"orgs"."compliance_control"',
+                "db_table": "orgs_compliance_control",
                 "ordering": ["category", "name"],
             },
         ),

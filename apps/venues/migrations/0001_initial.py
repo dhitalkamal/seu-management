@@ -9,9 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = [
-        ("venues", "0000_create_venues_schema"),
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
@@ -36,7 +34,7 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                "db_table": '"venues"."venue"',
+                "db_table": "venues_venue",
             },
         ),
         migrations.CreateModel(
@@ -62,7 +60,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": '"venues"."venue_space"',
+                "db_table": "venues_venue_space",
             },
         ),
     ]

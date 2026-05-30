@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                "db_table": '"orgs"."org_invite"',
+                "db_table": "orgs_org_invite",
                 "indexes": [
                     models.Index(fields=["org_id", "status"], name="idx_org_invite_org_status"),
                     models.Index(fields=["invitee_email", "status"], name="idx_org_invite_email"),

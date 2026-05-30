@@ -34,7 +34,7 @@ class Organisation(models.Model):
         ENTERPRISE = "enterprise", "Enterprise"
 
     class Meta:
-        db_table = '"orgs"."organisation"'
+        db_table = "orgs_organisation"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_by = models.UUIDField()
@@ -137,7 +137,7 @@ class OrgMember(models.Model):
         MEMBER = "member", "Member"
 
     class Meta:
-        db_table = '"orgs"."org_member"'
+        db_table = "orgs_org_member"
         constraints = [
             models.UniqueConstraint(
                 fields=["organisation", "user_id"],
@@ -183,7 +183,7 @@ class AllowedDomain(models.Model):
         WILDCARD = "wildcard", "Wildcard (e.g. *.company.com)"
 
     class Meta:
-        db_table = '"orgs"."allowed_domain"'
+        db_table = "orgs_allowed_domain"
         constraints = [
             models.UniqueConstraint(
                 fields=["organisation", "domain"],
@@ -210,7 +210,7 @@ class OrgDocument(models.Model):
         OTHER = "other", "Other"
 
     class Meta:
-        db_table = '"orgs"."org_document"'
+        db_table = "orgs_org_document"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name="documents")
@@ -232,7 +232,7 @@ class OrgInvite(models.Model):
         EXPIRED = "expired", "Expired"
 
     class Meta:
-        db_table = '"orgs"."org_invite"'
+        db_table = "orgs_org_invite"
         indexes = [
             models.Index(fields=["org_id", "status"], name="idx_org_invite_org_status"),
             models.Index(fields=["invitee_email", "status"], name="idx_org_invite_email"),

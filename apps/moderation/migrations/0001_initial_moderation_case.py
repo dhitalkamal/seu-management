@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 ("resolved_at", models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                "db_table": '"management"."moderation_case"',
+                "db_table": "management_moderation_case",
             },
         ),
         migrations.AddIndex(

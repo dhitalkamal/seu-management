@@ -26,7 +26,7 @@ class SupportTicket(models.Model):
         CLOSED = "closed", "Closed"
 
     class Meta:
-        db_table = '"orgs"."support_ticket"'
+        db_table = "orgs_support_ticket"
         ordering = ["-created_at"]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

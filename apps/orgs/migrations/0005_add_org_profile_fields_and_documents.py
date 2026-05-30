@@ -121,7 +121,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": '"orgs"."org_document"',
+                "db_table": "orgs_org_document",
             },
         ),
     ]

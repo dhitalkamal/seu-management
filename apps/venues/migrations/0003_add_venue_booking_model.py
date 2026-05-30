@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'db_table': '"venues"."venue_booking"',
+                'db_table': "venues_venue_booking",
             },
         ),
     ]

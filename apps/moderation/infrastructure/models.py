@@ -25,7 +25,7 @@ class ModerationCase(models.Model):
         TAKEN_DOWN = "taken_down", "Taken Down"
 
     class Meta:
-        db_table = '"management"."moderation_case"'
+        db_table = "management_moderation_case"
         indexes = [
             models.Index(fields=["status"], name="moderation_case_status_idx"),
             models.Index(fields=["created_at"], name="moderation_case_created_idx"),

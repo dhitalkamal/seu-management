@@ -11,9 +11,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     """Initial orgs tables."""
 
-    dependencies = [
-        ("orgs", "0000_create_orgs_schema"),
-    ]
+    initial = True
+
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
-            options={"db_table": '"orgs"."organisation"'},
+            options={"db_table": "orgs_organisation"},
         ),
         migrations.CreateModel(
             name="OrgMember",
@@ -86,7 +86,7 @@ class Migration(migrations.Migration):
                 ("is_active", models.BooleanField(default=True)),
                 ("joined_at", models.DateTimeField(auto_now_add=True)),
             ],
-            options={"db_table": '"orgs"."org_member"'},
+            options={"db_table": "orgs_org_member"},
         ),
         migrations.AddConstraint(
             model_name="orgmember",

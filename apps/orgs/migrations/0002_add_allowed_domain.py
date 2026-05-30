@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ("is_active", models.BooleanField(default=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
-            options={"db_table": '"orgs"."allowed_domain"'},
+            options={"db_table": "orgs_allowed_domain"},
         ),
         migrations.AddConstraint(
             model_name="alloweddomain",

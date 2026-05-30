@@ -63,7 +63,7 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                "db_table": '"orgs"."support_ticket"',
+                "db_table": "orgs_support_ticket",
                 "ordering": ["-created_at"],
             },
         ),

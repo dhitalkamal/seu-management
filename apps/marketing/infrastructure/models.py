@@ -13,7 +13,7 @@ class AudienceSegment(models.Model):
     """A named filter set that defines a group of recipients."""
 
     class Meta:
-        db_table = '"marketing"."audience_segment"'
+        db_table = "marketing_audience_segment"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_by = models.UUIDField()
@@ -51,7 +51,7 @@ class Campaign(models.Model):
         CANCELLED = "cancelled", "Cancelled"
 
     class Meta:
-        db_table = '"marketing"."campaign"'
+        db_table = "marketing_campaign"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_by = models.UUIDField()

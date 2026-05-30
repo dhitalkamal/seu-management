@@ -16,7 +16,7 @@ class ComplianceControl(models.Model):
         NA = "na", "N/A"
 
     class Meta:
-        db_table = '"orgs"."compliance_control"'
+        db_table = "orgs_compliance_control"
         ordering = ["category", "name"]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

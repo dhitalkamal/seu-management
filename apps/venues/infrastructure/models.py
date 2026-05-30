@@ -13,7 +13,7 @@ class Venue(models.Model):
     """A physical venue owned by an organisation."""
 
     class Meta:
-        db_table = '"venues"."venue"'
+        db_table = "venues_venue"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organisation_id = models.UUIDField()
@@ -74,7 +74,7 @@ class VenueSpace(models.Model):
     """A named sub-space within a venue."""
 
     class Meta:
-        db_table = '"venues"."venue_space"'
+        db_table = "venues_venue_space"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     venue = models.ForeignKey(Venue, on_delete=models.CASCADE, related_name="spaces")
@@ -110,7 +110,7 @@ class VenueBooking(models.Model):
     """A time-bound reservation of a venue for a specific event."""
 
     class Meta:
-        db_table = '"venues"."venue_booking"'
+        db_table = "venues_venue_booking"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     venue_id = models.UUIDField(db_index=True)

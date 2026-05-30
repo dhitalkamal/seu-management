@@ -9,9 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = [
-        ("marketing", "0000_create_marketing_schema"),
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
@@ -29,7 +27,7 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                "db_table": '"marketing"."audience_segment"',
+                "db_table": "marketing_audience_segment",
             },
         ),
         migrations.CreateModel(
@@ -67,7 +65,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": '"marketing"."campaign"',
+                "db_table": "marketing_campaign",
             },
         ),
     ]

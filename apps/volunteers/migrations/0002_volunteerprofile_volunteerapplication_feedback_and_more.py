@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                "db_table": '"volunteers"."volunteer_profile"',
+                "db_table": "volunteers_volunteer_profile",
             },
         ),
         migrations.AddField(
@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": '"volunteers"."certificate"',
+                "db_table": "volunteers_certificate",
             },
         ),
         migrations.CreateModel(
@@ -84,7 +84,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": '"volunteers"."volunteer_shift"',
+                "db_table": "volunteers_volunteer_shift",
             },
         ),
     ]

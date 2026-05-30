@@ -9,9 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     initial = True
 
-    dependencies = [
-        ("community", "0000_create_community_schema"),
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
@@ -45,7 +43,7 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                "db_table": '"community"."community"',
+                "db_table": "community_community",
             },
         ),
         migrations.CreateModel(
@@ -103,7 +101,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": '"community"."community_post"',
+                "db_table": "community_community_post",
             },
         ),
         migrations.CreateModel(
@@ -127,7 +125,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": '"community"."community_member"',
+                "db_table": "community_community_member",
                 "constraints": [
                     models.UniqueConstraint(
                         fields=("community", "user_id"), name="unique_community_member"

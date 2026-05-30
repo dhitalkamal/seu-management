@@ -19,7 +19,7 @@ class VolunteerRole(models.Model):
     """A volunteer position for an event."""
 
     class Meta:
-        db_table = '"volunteers"."volunteer_role"'
+        db_table = "volunteers_volunteer_role"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     event_id = models.UUIDField()
@@ -68,7 +68,7 @@ class VolunteerApplication(models.Model):
         CONFIRMED = "confirmed", "Confirmed"
 
     class Meta:
-        db_table = '"volunteers"."volunteer_application"'
+        db_table = "volunteers_volunteer_application"
         constraints = [
             models.UniqueConstraint(
                 fields=["volunteer_role", "user_id"],
@@ -127,7 +127,7 @@ class Certificate(models.Model):
     """An issued participation certificate for a volunteer."""
 
     class Meta:
-        db_table = '"volunteers"."certificate"'
+        db_table = "volunteers_certificate"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     application = models.OneToOneField(VolunteerApplication, on_delete=models.CASCADE, related_name="certificate")
@@ -167,7 +167,7 @@ class VolunteerShift(models.Model):
     """A time-boxed shift slot attached to a volunteer role."""
 
     class Meta:
-        db_table = '"volunteers"."volunteer_shift"'
+        db_table = "volunteers_volunteer_shift"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     role = models.ForeignKey(VolunteerRole, on_delete=models.CASCADE, related_name="shifts")
@@ -212,7 +212,7 @@ class VolunteerProfile(models.Model):
     """Aggregate stats for a single volunteer user across all events."""
 
     class Meta:
-        db_table = '"volunteers"."volunteer_profile"'
+        db_table = "volunteers_volunteer_profile"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_id = models.UUIDField(unique=True)

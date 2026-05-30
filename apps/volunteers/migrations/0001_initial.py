@@ -11,9 +11,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     """Initial volunteers tables."""
 
-    dependencies = [
-        ("volunteers", "0000_create_volunteers_schema"),
-    ]
+    initial = True
+
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ("is_active", models.BooleanField(default=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
-            options={"db_table": '"volunteers"."volunteer_role"'},
+            options={"db_table": "volunteers_volunteer_role"},
         ),
         migrations.CreateModel(
             name="VolunteerApplication",
@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
-            options={"db_table": '"volunteers"."volunteer_application"'},
+            options={"db_table": "volunteers_volunteer_application"},
         ),
         migrations.AddConstraint(
             model_name="volunteerapplication",

@@ -37,12 +37,12 @@ def test_approve_missing_org_raises():
         ApproveOrganizationUseCase(repo).execute(org_id=uuid.uuid4())
 
 
-def test_reject_sets_status_suspended():
-    """Rejecting a pending_review org sets status=suspended."""
+def test_reject_sets_status_rejected():
+    """Rejecting a pending_review org sets status=rejected."""
     org = make_org(status="pending_review")
     repo = FakeOrgRepository([org])
     result = RejectOrganizationUseCase(repo).execute(org_id=org.id)
-    assert result.status == "suspended"
+    assert result.status == "rejected"
 
 
 def test_reject_wrong_status_raises():

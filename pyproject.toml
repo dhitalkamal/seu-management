@@ -17,6 +17,7 @@ dependencies = [
     "drf-spectacular",
     "boto3>=1.34",
     "geopy>=2.4.1",
+    "dj-database-url>=2.0.0",
 ]
 
 [dependency-groups]
@@ -53,7 +54,7 @@ plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 django_settings_module = "config.settings.development"
 
 [[tool.mypy.overrides]]
-module = ["apps.*.infrastructure.models", "apps.*.infrastructure.support_models", "apps.compliance.models"]
+module = ["apps.*.infrastructure.models", "apps.*.infrastructure.support_models", "apps.*.infrastructure.repositories", "apps.*.infrastructure.support_repository", "apps.*.infrastructure.storage", "apps.*.presentation.internal_views", "apps.compliance.models"]
 ignore_errors = true
 
 [[tool.mypy.overrides]]

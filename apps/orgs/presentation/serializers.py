@@ -11,13 +11,17 @@ class CreateOrgSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     slug = serializers.SlugField(max_length=100)
     contact_email = serializers.EmailField()
-    description = serializers.CharField(required=False, default="")
+    description = serializers.CharField(min_length=20)
     website = serializers.URLField(required=False, default="", allow_blank=True)
     logo_url = serializers.URLField(required=False, default="", allow_blank=True)
-    phone = serializers.CharField(max_length=20, required=False, default="")
-    address = serializers.CharField(max_length=500, required=False, default="")
-    city = serializers.CharField(max_length=100, required=False, default="")
-    country = serializers.CharField(max_length=100, required=False, default="")
+    phone = serializers.RegexField(
+        regex=r"^\+?\d{7,15}$",
+        max_length=20,
+        error_messages={"invalid": "Phone must contain only digits (7-15), optionally starting with +."},
+    )
+    address = serializers.CharField(max_length=500, min_length=5)
+    city = serializers.CharField(max_length=100)
+    country = serializers.CharField(max_length=100)
     org_type = serializers.ChoiceField(
         choices=["company", "ngo", "community", "educational", "government", "individual"],
         required=False,
@@ -27,6 +31,14 @@ class CreateOrgSerializer(serializers.Serializer):
     twitter_url = serializers.URLField(required=False, default="", allow_blank=True)
     instagram_url = serializers.URLField(required=False, default="", allow_blank=True)
     linkedin_url = serializers.URLField(required=False, default="", allow_blank=True)
+
+    def validate(self, attrs: dict) -> dict:
+        """Ensure at least one social link is provided."""
+        social_fields = ["facebook_url", "twitter_url", "instagram_url", "linkedin_url"]
+        has_social = any(attrs.get(f) for f in social_fields)
+        if not has_social:
+            raise serializers.ValidationError({"facebook_url": "At least one social media link is required."})
+        return attrs
 
 
 class OrgResponseSerializer(serializers.Serializer):

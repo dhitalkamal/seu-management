@@ -307,7 +307,15 @@ class OrgDetailView(APIView):
         },
     )
     def patch(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Partial-update profile fields on an existing organization."""
+        """Partial-update profile fields. Only allowed when org is rejected or active."""
+        org = _ORG_REPO().get_by_id(org_id)
+        if org.status not in ("rejected", "active"):
+            return error_response(
+                code="ERR_ORG_NOT_EDITABLE",
+                message="Organization can only be edited when rejected by admin or when active.",
+                http_status=403,
+                request=request,
+            )
         ser = _UPDATE_ORG_SER(data=request.data)
         ser.is_valid(raise_exception=True)
         result = _UPDATE_ORG_UC(_ORG_REPO()).execute(org_id=org_id, **ser.validated_data)
@@ -428,6 +436,28 @@ class OrgRejectView(APIView):
         return success_response(_ORG_RESP_SER(result).data, request=request)
 
 
+class OrgResubmitView(APIView):
+    """Resubmit a rejected organization for review (org owner only)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Organizations"],
+        summary="Resubmit organization for review",
+        request=None,
+        responses={
+            200: OpenApiResponse(description="Organization resubmitted.", response=_ORG_RESP_SER),
+            422: OpenApiResponse(description="Invalid status transition."),
+        },
+    )
+    def post(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Transition rejected org back to pending_review."""
+        from apps.orgs.application.use_cases.resubmit_org import ResubmitOrganizationUseCase
+
+        result = ResubmitOrganizationUseCase(_ORG_REPO()).execute(org_id=org_id)
+        return success_response(_ORG_RESP_SER(result).data, request=request)
+
+
 class OrgSuspendView(APIView):
     """Suspend an active organization (superadmin only)."""
 
@@ -524,11 +554,22 @@ class OrgDocumentListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request, org_id: uuid.UUID) -> Response:
-        """Return all documents belonging to the given organization."""
+        """Return all documents with presigned URLs for viewing."""
+        from apps.common.storage import generate_presigned_url
         from apps.orgs.infrastructure.models import OrgDocument as OrgDocModel
 
         docs = OrgDocModel.objects.filter(organization_id=org_id).order_by("-uploaded_at")
-        return success_response(_DOC_RESP_SER(docs, many=True).data, request=request)
+        data = _DOC_RESP_SER(docs, many=True).data
+        for doc in data:
+            raw_url = doc.get("file_url", "")
+            # extract the object key from the stored URL (everything after bucket name)
+            parts = raw_url.split("/sansaar-docs/")
+            if len(parts) == 2:
+                try:
+                    doc["file_url"] = generate_presigned_url(parts[1])
+                except Exception:
+                    pass
+        return success_response(data, request=request)
 
     def post(self, request: Request, org_id: uuid.UUID) -> Response:
         """Upload a new document for the given organization."""

@@ -31,7 +31,7 @@ class RejectOrganizationUseCase:
         org = self._orgs.get_by_id(org_id)
         if org.status not in _ALLOWED_FROM:
             raise InvalidOrgStatusTransitionError(f"Cannot reject an organization with status '{org.status}'.")
-        org.status = "suspended"
+        org.status = "rejected"
         org.reviewed_at = timezone.now()
         org.reviewed_by = reviewed_by
         return self._orgs.update(org)

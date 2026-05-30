@@ -24,6 +24,7 @@ class Organization(models.Model):
         PENDING_REVIEW = "pending_review", "Pending Review"
         APPROVED = "approved", "Approved"
         ACTIVE = "active", "Active"
+        REJECTED = "rejected", "Rejected"
         SUSPENDED = "suspended", "Suspended"
 
     class Plan(models.TextChoices):

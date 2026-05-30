@@ -66,16 +66,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST", default="localhost"),
-        "PORT": config("DB_PORT", default="5432"),
+_DATABASE_URL = config("DATABASE_URL", default="")
+if _DATABASE_URL:
+    import dj_database_url
+
+    DATABASES = {"default": dj_database_url.parse(_DATABASE_URL, conn_max_age=600, ssl_require=True)}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("DB_NAME"),
+            "USER": config("DB_USER"),
+            "PASSWORD": config("DB_PASSWORD"),
+            "HOST": config("DB_HOST", default="localhost"),
+            "PORT": config("DB_PORT", default="5432"),
+        }
     }
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -144,3 +150,7 @@ MINIO_ACCESS_KEY = config("MINIO_ACCESS_KEY", default="sansaar")
 MINIO_SECRET_KEY = config("MINIO_SECRET_KEY", default="sansaar_secret_12345")
 MINIO_BUCKET = config("MINIO_BUCKET", default="sansaar-docs")
 MINIO_PUBLIC_BASE_URL = config("MINIO_PUBLIC_BASE_URL", default="http://localhost:9000/sansaar-docs")
+MINIO_PUBLIC_ENDPOINT = config("MINIO_PUBLIC_ENDPOINT", default="http://localhost:9000")
+STORAGE_USE_ACL = config("STORAGE_USE_ACL", default=True, cast=bool)
+STORAGE_FORCE_PRESIGNED = config("STORAGE_FORCE_PRESIGNED", default=False, cast=bool)
+STORAGE_REGION = config("STORAGE_REGION", default="us-east-1")

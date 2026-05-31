@@ -116,6 +116,8 @@ class VolunteerRoleView(APIView):
     )
     def get(self, request: Request) -> Response:
         """Return all active roles, optionally filtered by event_id or organization_id."""
+        from django.db.models import Count, Q
+
         from apps.volunteers.infrastructure.models import VolunteerRole as RoleModel
 
         qs = RoleModel.objects.filter(is_active=True).order_by("-created_at")  # type: ignore[attr-defined]
@@ -125,7 +127,18 @@ class VolunteerRoleView(APIView):
             qs = qs.filter(event_id=event_id)
         if org_id:
             qs = qs.filter(organization_id=org_id)
-        roles = [obj.to_entity() for obj in qs]
+        # annotate with approved/confirmed application count
+        qs = qs.annotate(
+            _filled=Count(
+                "volunteerapplication",
+                filter=Q(volunteerapplication__status__in=["approved", "confirmed"]),
+            )
+        )
+        roles = []
+        for obj in qs:
+            entity = obj.to_entity()
+            entity.filled = obj._filled  # type: ignore[attr-defined]
+            roles.append(entity)
         return success_response(_ROLE_RESP_SER(roles, many=True).data, request=request)
 
     @extend_schema(

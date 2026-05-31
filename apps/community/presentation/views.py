@@ -280,6 +280,22 @@ class CommunityPostListCreateView(APIView):
                 http_status=404,
                 request=request,
             )
+        # annotate is_liked per user
+        user_id = getattr(request.user, "id", None)
+        if user_id:
+            from apps.community.infrastructure.models import PostLike
+
+            liked_post_ids = set(
+                PostLike.objects.filter(
+                    user_id=user_id,
+                    post_id__in=[p.id for p in posts],
+                ).values_list("post_id", flat=True)
+            )
+            for p in posts:
+                p.is_liked = p.id in liked_post_ids
+        else:
+            for p in posts:
+                p.is_liked = False
         return success_response(CommunityPostResponseSerializer(posts, many=True).data, request=request)
 
     @extend_schema(

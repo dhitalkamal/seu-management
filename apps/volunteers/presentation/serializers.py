@@ -48,6 +48,7 @@ class VolunteerRoleResponseSerializer(serializers.Serializer):
     name = serializers.CharField()
     description = serializers.CharField()
     capacity = serializers.IntegerField()
+    filled = serializers.IntegerField(default=0)
     is_active = serializers.BooleanField()
     created_at = serializers.DateTimeField()
 

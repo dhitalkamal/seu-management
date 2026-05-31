@@ -19,6 +19,7 @@ class VolunteerRoleEntity:
     created_at: datetime
     organization_id: uuid.UUID | None = None
     description: str = ""
+    filled: int = 0
 
 
 @dataclass(slots=True)

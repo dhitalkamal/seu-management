@@ -110,6 +110,7 @@ class CommunityPostEntity:
     media_urls: list[str] = field(default_factory=list)
     deleted_at: datetime | None = None
     author_name: str = ""
+    is_liked: bool = False
 
 
 @dataclass(slots=True)

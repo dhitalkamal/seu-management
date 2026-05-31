@@ -53,6 +53,7 @@ class CommunityPostResponseSerializer(serializers.Serializer):
     comment_count = serializers.IntegerField()
     is_pinned = serializers.BooleanField()
     media_urls = serializers.ListField(child=serializers.CharField())
+    is_liked = serializers.BooleanField(default=False)
     created_at = serializers.DateTimeField()
 
 

@@ -1,4 +1,5 @@
 """Base Django settings for the management-service."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -29,6 +30,8 @@ INSTALLED_APPS = [
     "apps.volunteers",
     "apps.community",
     "apps.marketing",
+    "apps.moderation",
+    "apps.compliance",
 ]
 
 MIDDLEWARE = [
@@ -63,16 +66,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST", default="localhost"),
-        "PORT": config("DB_PORT", default="5432"),
+_DATABASE_URL = config("DATABASE_URL", default="")
+if _DATABASE_URL:
+    import dj_database_url
+
+    DATABASES = {"default": dj_database_url.parse(_DATABASE_URL, conn_max_age=600, ssl_require=True)}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("DB_NAME"),
+            "USER": config("DB_USER"),
+            "PASSWORD": config("DB_PASSWORD"),
+            "HOST": config("DB_HOST", default="localhost"),
+            "PORT": config("DB_PORT", default="5432"),
+        }
     }
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -91,7 +100,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework_simplejwt.authentication.JWTTokenUserAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -123,9 +132,25 @@ CACHES = {
 
 SPECTACULAR_SETTINGS = {
     "TITLE": f"{SERVICE_NAME} API",
-    "DESCRIPTION": "Organisation, venue, volunteer, community, and marketing service for the Sansaar platform.",
+    "DESCRIPTION": "Organization, venue, volunteer, community, and marketing service for the Sansaar platform.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
+    "SERVE_AUTHENTICATION": [],
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": "/api/v1/",
 }
+
+# Google Maps geocoding - optional, geocoding is skipped when not set
+GOOGLE_MAPS_API_KEY = config("GOOGLE_MAPS_API_KEY", default="")
+
+# MinIO / S3-compatible storage
+MINIO_ENDPOINT = config("MINIO_ENDPOINT", default="http://minio:9000")
+MINIO_ACCESS_KEY = config("MINIO_ACCESS_KEY", default="sansaar")
+MINIO_SECRET_KEY = config("MINIO_SECRET_KEY", default="sansaar_secret_12345")
+MINIO_BUCKET = config("MINIO_BUCKET", default="sansaar-docs")
+MINIO_PUBLIC_BASE_URL = config("MINIO_PUBLIC_BASE_URL", default="http://localhost:9000/sansaar-docs")
+MINIO_PUBLIC_ENDPOINT = config("MINIO_PUBLIC_ENDPOINT", default="http://localhost:9000")
+STORAGE_USE_ACL = config("STORAGE_USE_ACL", default=True, cast=bool)
+STORAGE_FORCE_PRESIGNED = config("STORAGE_FORCE_PRESIGNED", default=False, cast=bool)
+STORAGE_REGION = config("STORAGE_REGION", default="us-east-1")

@@ -12,13 +12,21 @@ dependencies = [
     "python-decouple",
     "gunicorn",
     "redis",
+    "cryptography>=42.0.0",
     "pika",
     "drf-spectacular",
+    "boto3>=1.34",
+    "geopy>=2.4.1",
+    "dj-database-url>=2.0.0",
 ]
 
 [dependency-groups]
 dev = [
+    "django-stubs>=6.0.4",
+    "djangorestframework-stubs>=3.17.0",
+    "mypy>=2.1.0",
     "pytest>=8.0",
+    "pytest-cov>=7.1.0",
     "pytest-django>=4.8",
     "ruff>=0.9",
 ]
@@ -30,8 +38,49 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [tool.ruff]
-line-length = 100
+exclude = ["*/migrations/*"]
+line-length = 140
 target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+"*/migrations/*" = ["E501", "I001"]
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.development"
+
+[[tool.mypy.overrides]]
+module = ["apps.*.infrastructure.models", "apps.*.infrastructure.support_models", "apps.*.infrastructure.repositories", "apps.*.infrastructure.support_repository", "apps.*.infrastructure.storage", "apps.*.presentation.internal_views", "apps.compliance.models"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["apps.*.migrations.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["apps.common.*", "config.settings.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "apps.orgs.application.use_cases.update_ticket_status",
+    "apps.orgs.application.use_cases.list_tickets",
+    "apps.orgs.application.use_cases.create_ticket",
+    "apps.orgs.management.commands.consume_events",
+    "apps.orgs.presentation.views",
+    "apps.orgs.presentation.support_views",
+    "apps.venues.presentation.views",
+    "apps.marketing.presentation.views",
+    "apps.community.presentation.views",
+    "apps.moderation.presentation.views",
+    "apps.moderation.tests.unit.fakes",
+    "apps.compliance.presentation.views",
+]
+ignore_errors = true

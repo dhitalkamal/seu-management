@@ -39,18 +39,23 @@ def test_list_communities_returns_all():
 
 # * create community
 def test_create_community_success():
-    """Successfully creates a community and returns it."""
+    """Successfully creates a community, returns it, and auto-joins the creator."""
     from apps.community.application.use_cases.create_community import CreateCommunityUseCase
 
     repo = FakeCommunityRepository()
-    result = CreateCommunityUseCase(repo).execute(
-        created_by=uuid.uuid4(),
+    member_repo = FakeCommunityMemberRepository()
+    creator_id = uuid.uuid4()
+    result = CreateCommunityUseCase(repo, member_repo).execute(
+        created_by=creator_id,
         name="Test Community",
         slug="test-community",
         privacy="public",
     )
     assert result.name == "Test Community"
     assert result.slug == "test-community"
+    # creator should be auto-joined and member_count starts at 1
+    assert result.member_count == 1
+    assert member_repo.get_membership(result.id, creator_id) is not None
 
 
 def test_create_community_duplicate_slug_raises():
@@ -59,7 +64,7 @@ def test_create_community_duplicate_slug_raises():
 
     repo = FakeCommunityRepository([make_community(slug="taken-slug")])
     with pytest.raises(SlugAlreadyExistsError):
-        CreateCommunityUseCase(repo).execute(
+        CreateCommunityUseCase(repo, FakeCommunityMemberRepository()).execute(
             created_by=uuid.uuid4(),
             name="Another",
             slug="taken-slug",

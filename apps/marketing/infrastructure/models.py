@@ -90,3 +90,29 @@ class Campaign(models.Model):
             segment_id=entity.segment_id,
             sent_at=entity.sent_at,
         )
+
+
+class Sponsor(models.Model):
+    """An event or organization sponsor."""
+
+    class Tier(models.TextChoices):
+        PLATINUM = "platinum", "Platinum"
+        GOLD = "gold", "Gold"
+        SILVER = "silver", "Silver"
+        BRONZE = "bronze", "Bronze"
+
+    class Meta:
+        db_table = "marketing_sponsor"
+        ordering = ["-created_at"]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    organization_id = models.UUIDField(db_index=True)
+    name = models.CharField(max_length=255)
+    logo_url = models.URLField(blank=True, default="")
+    website = models.URLField(blank=True, default="")
+    tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.GOLD)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    event_ids = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

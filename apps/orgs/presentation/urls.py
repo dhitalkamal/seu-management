@@ -6,6 +6,7 @@ from django.urls import URLPattern, path
 
 from .internal_views import InternalOrgPlanView, InternalOrgRolesView
 from .views import (
+    ChangePlanView,
     OrgApproveView,
     OrgDeleteView,
     OrgDetailView,
@@ -57,4 +58,5 @@ urlpatterns: list[URLPattern] = [
         InternalOrgPlanView.as_view(),
         name="internal-org-plan",
     ),
+    path("<uuid:org_id>/plan/", ChangePlanView.as_view(), name="org-change-plan"),
 ]

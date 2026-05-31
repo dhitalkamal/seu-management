@@ -87,6 +87,10 @@ class DjangoOrgMemberRepository(IOrgMemberRepository):
         """True if an active membership exists for this (org, user) pair."""
         return OrgMember.objects.filter(organization_id=org_id, user_id=user_id, is_active=True).exists()
 
+    def list_by_org(self, org_id: uuid.UUID) -> list:
+        """Return all active members for this organization."""
+        return list(OrgMember.objects.filter(organization_id=org_id, is_active=True).order_by("-joined_at"))
+
 
 class DjangoOrgDocumentRepository:
     """CRUD operations for OrgDocument backed by Django ORM."""

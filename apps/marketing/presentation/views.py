@@ -177,3 +177,94 @@ class SegmentListCreateView(APIView):
             filters=d.get("filters", {}),
         )
         return _CREATED(SegmentResponseSerializer(segment).data, request=request)
+
+
+class SponsorListCreateView(APIView):
+    """List or create sponsors for an organization."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(tags=["Sponsors"], summary="List sponsors")
+    def get(self, request: Request) -> Response:
+        """Return sponsors for the given organization_id."""
+        from apps.marketing.infrastructure.models import Sponsor
+
+        org_id = request.query_params.get("organization_id")
+        qs = Sponsor.objects.filter(is_active=True)
+        if org_id:
+            qs = qs.filter(organization_id=org_id)
+        data = list(qs.values("id", "organization_id", "name", "logo_url", "website", "tier", "amount", "event_ids", "created_at"))
+        for d in data:
+            d["id"] = str(d["id"])
+            d["organization_id"] = str(d["organization_id"])
+            d["amount"] = str(d["amount"])
+        return success_response(data, request=request)
+
+    @extend_schema(tags=["Sponsors"], summary="Create sponsor")
+    def post(self, request: Request) -> Response:
+        """Create a new sponsor."""
+        from rest_framework import serializers as s
+
+        from apps.marketing.infrastructure.models import Sponsor
+
+        class Ser(s.Serializer):
+            organization_id = s.UUIDField()
+            name = s.CharField(max_length=255)
+            logo_url = s.URLField(required=False, default="", allow_blank=True)
+            website = s.URLField(required=False, default="", allow_blank=True)
+            tier = s.ChoiceField(choices=["platinum", "gold", "silver", "bronze"], default="gold")
+            amount = s.DecimalField(max_digits=12, decimal_places=2, default=0)
+            event_ids = s.ListField(child=s.CharField(), default=list)
+
+        ser = Ser(data=request.data)
+        ser.is_valid(raise_exception=True)
+        d = ser.validated_data
+        sponsor = Sponsor.objects.create(**d)
+        return _CREATED(
+            {
+                "id": str(sponsor.id),
+                "organization_id": str(sponsor.organization_id),
+                "name": sponsor.name,
+                "logo_url": sponsor.logo_url,
+                "website": sponsor.website,
+                "tier": sponsor.tier,
+                "amount": str(sponsor.amount),
+                "event_ids": sponsor.event_ids,
+                "created_at": sponsor.created_at.isoformat(),
+            },
+            request=request,
+        )
+
+
+class SponsorDetailView(APIView):
+    """Update or delete a sponsor."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(tags=["Sponsors"], summary="Update sponsor")
+    def patch(self, request: Request, sponsor_id: uuid.UUID) -> Response:
+        """Partially update a sponsor."""
+        from apps.marketing.infrastructure.models import Sponsor
+
+        try:
+            sponsor = Sponsor.objects.get(id=sponsor_id)
+        except Sponsor.DoesNotExist:
+            return error_response(code="ERR_NOT_FOUND", message="Sponsor not found.", http_status=404, request=request)
+        for field in ["name", "logo_url", "website", "tier", "amount", "event_ids"]:
+            if field in request.data:
+                setattr(sponsor, field, request.data[field])
+        sponsor.save()
+        return success_response({"id": str(sponsor.id), "name": sponsor.name}, request=request)
+
+    @extend_schema(tags=["Sponsors"], summary="Delete sponsor")
+    def delete(self, request: Request, sponsor_id: uuid.UUID) -> Response:
+        """Soft-delete a sponsor."""
+        from apps.marketing.infrastructure.models import Sponsor
+
+        try:
+            sponsor = Sponsor.objects.get(id=sponsor_id)
+        except Sponsor.DoesNotExist:
+            return error_response(code="ERR_NOT_FOUND", message="Sponsor not found.", http_status=404, request=request)
+        sponsor.is_active = False
+        sponsor.save(update_fields=["is_active"])
+        return Response(status=204)

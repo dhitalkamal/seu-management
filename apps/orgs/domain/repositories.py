@@ -36,6 +36,9 @@ class IOrgMemberRepository(ABC):
     @abstractmethod
     def exists(self, org_id: uuid.UUID, user_id: uuid.UUID) -> bool: ...
 
+    @abstractmethod
+    def list_by_org(self, org_id: uuid.UUID) -> list[OrgMemberEntity]: ...
+
 
 class IOrgInviteRepository(ABC):
     """Persistence contract for OrgInvite records."""

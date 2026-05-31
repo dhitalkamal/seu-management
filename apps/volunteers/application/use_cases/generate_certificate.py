@@ -20,7 +20,7 @@ from apps.volunteers.domain.repositories import (
     IVolunteerProfileRepository,
 )
 
-_VERIFY_BASE = "https://sansaar.com/verify/cert"
+_VERIFY_BASE = "http://localhost:5173/verify/cert"
 
 
 class GenerateCertificateUseCase:

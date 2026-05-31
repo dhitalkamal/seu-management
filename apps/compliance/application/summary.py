@@ -12,6 +12,7 @@ def compute_summary(controls: list[dict]) -> dict:
     total = len(controls)
     passing = sum(1 for c in controls if c["status"] == "pass")
     failing = sum(1 for c in controls if c["status"] == "fail")
+    na = sum(1 for c in controls if c["status"] == "na")
 
     by_category: dict[str, dict[str, int]] = {}
     for c in controls:
@@ -28,5 +29,6 @@ def compute_summary(controls: list[dict]) -> dict:
         "total": total,
         "passing": passing,
         "failing": failing,
+        "na": na,
         "by_category": by_category,
     }

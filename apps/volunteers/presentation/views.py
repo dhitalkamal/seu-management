@@ -105,9 +105,28 @@ def _get_publisher() -> IEventPublisher:
 
 
 class VolunteerRoleView(APIView):
-    """Create a new volunteer role for an event."""
+    """List or create volunteer roles."""
 
     permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Volunteers"],
+        summary="List volunteer roles",
+        responses={200: OpenApiResponse(description="Roles list.", response=_ROLE_RESP_SER(many=True))},
+    )
+    def get(self, request: Request) -> Response:
+        """Return all active roles, optionally filtered by event_id or organization_id."""
+        from apps.volunteers.infrastructure.models import VolunteerRole as RoleModel
+
+        qs = RoleModel.objects.filter(is_active=True).order_by("-created_at")  # type: ignore[attr-defined]
+        event_id = request.query_params.get("event_id")
+        org_id = request.query_params.get("organization_id")
+        if event_id:
+            qs = qs.filter(event_id=event_id)
+        if org_id:
+            qs = qs.filter(organization_id=org_id)
+        roles = [obj.to_entity() for obj in qs]
+        return success_response(_ROLE_RESP_SER(roles, many=True).data, request=request)
 
     @extend_schema(
         tags=["Volunteers"],
@@ -137,6 +156,44 @@ class VolunteerRoleView(APIView):
             metadata={"role_id": str(result.id), "role_name": result.name},
         )
         return _CREATED(_ROLE_RESP_SER(result).data, request=request)
+
+
+class MyVolunteerApplicationsView(APIView):
+    """List the authenticated user's volunteer applications."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Volunteers"],
+        summary="My volunteer applications",
+        responses={200: OpenApiResponse(description="User applications.", response=_APP_RESP_SER(many=True))},
+    )
+    def get(self, request: Request) -> Response:
+        """Return all applications submitted by the authenticated user."""
+        from apps.volunteers.infrastructure.models import VolunteerApplication as AppModel
+
+        user_id = _UUID(str(request.user.id))
+        apps = [obj.to_entity() for obj in AppModel.objects.filter(user_id=user_id).order_by("-created_at")]  # type: ignore[attr-defined]
+        return success_response(_APP_RESP_SER(apps, many=True).data, request=request)
+
+
+class MyCertificatesView(APIView):
+    """List the authenticated user's volunteer certificates."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Volunteers"],
+        summary="My certificates",
+        responses={200: OpenApiResponse(description="User certificates.", response=_CERT_RESP_SER(many=True))},
+    )
+    def get(self, request: Request) -> Response:
+        """Return all certificates issued to the authenticated user."""
+        from apps.volunteers.infrastructure.models import Certificate as CertModel
+
+        user_id = _UUID(str(request.user.id))
+        certs = [obj.to_entity() for obj in CertModel.objects.filter(user_id=user_id).order_by("-issued_at")]  # type: ignore[attr-defined]
+        return success_response(_CERT_RESP_SER(certs, many=True).data, request=request)
 
 
 class VolunteerRoleApplyView(APIView):

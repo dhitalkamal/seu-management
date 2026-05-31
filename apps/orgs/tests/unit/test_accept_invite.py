@@ -78,6 +78,9 @@ class FakeMemberRepo(IOrgMemberRepository):
     def exists(self, org_id: uuid.UUID, user_id: uuid.UUID) -> bool:
         return any(m.organization_id == org_id and m.user_id == user_id and m.is_active for m in self._store.values())
 
+    def list_by_org(self, org_id: uuid.UUID) -> list[OrgMemberEntity]:
+        return [m for m in self._store.values() if m.organization_id == org_id and m.is_active]
+
 
 def test_accept_invite_creates_membership_and_marks_accepted() -> None:
     """Accepting a pending invite creates an org membership and sets status=accepted."""

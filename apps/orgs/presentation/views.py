@@ -329,9 +329,22 @@ class OrgDetailView(APIView):
 
 
 class OrgMembersView(APIView):
-    """Add a member to an organization."""
+    """List or add members of an organization."""
 
     permission_classes = [IsOrgAdmin]
+
+    @extend_schema(
+        tags=["Organizations"],
+        summary="List org members",
+        responses={
+            200: OpenApiResponse(description="Member list.", response=_MEMBER_RESP_SER(many=True)),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+        },
+    )
+    def get(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Return all members belonging to this organization."""
+        members = _MEMBER_REPO().list_by_org(org_id)
+        return success_response(_MEMBER_RESP_SER(members, many=True).data, request=request)
 
     @extend_schema(
         tags=["Organizations"],
@@ -794,3 +807,69 @@ class OrgInviteDetailView(APIView):
         """Revoke the invite (inviter/admin action)."""
         _REVOKE_INVITE_UC(_INVITE_REPO()).execute(invite_id=invite_id)
         return Response(status=204)
+
+
+# * org plan management
+
+
+class ChangePlanView(APIView):
+    """PATCH <org_id>/plan/ - update the subscription plan for an org."""
+
+    # org owner or superadmin can change the plan
+    permission_classes = [IsOrgOwner]
+
+    @extend_schema(
+        tags=["Organizations"],
+        summary="Change organization plan",
+        description="Update the subscription plan for an organization. plan must be one of: free, starter, pro, ngo, enterprise.",
+        request=inline_serializer(
+            name="ChangePlanRequest",
+            fields={
+                "plan": serializers.ChoiceField(choices=["free", "starter", "pro", "ngo", "enterprise"]),
+                "plan_expires_at": serializers.DateTimeField(required=False, allow_null=True),
+            },
+        ),
+        responses={
+            200: OpenApiResponse(description="Plan updated.", response=_ORG_RESP_SER),
+            400: OpenApiResponse(description="Invalid plan value."),
+            401: OpenApiResponse(description="Missing or invalid JWT."),
+            403: OpenApiResponse(description="Not the org owner."),
+            404: OpenApiResponse(description="Organization not found."),
+        },
+    )
+    def patch(self, request: Request, org_id: uuid.UUID) -> Response:
+        """Validate the plan field and update the org's subscription plan."""
+        from apps.orgs.application.use_cases.change_plan import ChangePlanUseCase
+
+        plan = request.data.get("plan", "")
+        plan_expires_at = request.data.get("plan_expires_at")
+
+        if not plan:
+            return error_response(
+                code="ERR_ORG_PLAN_REQUIRED",
+                message="plan is required.",
+                http_status=400,
+                request=request,
+            )
+
+        try:
+            result = ChangePlanUseCase(_ORG_REPO()).execute(
+                org_id=org_id,
+                plan=plan,
+                plan_expires_at=plan_expires_at,
+            )
+        except ValueError as exc:
+            return error_response(
+                code="ERR_ORG_INVALID_PLAN",
+                message=str(exc),
+                http_status=400,
+                request=request,
+            )
+
+        publish_audit(
+            request=request,
+            user_id=_UUID(str(request.user.id)),
+            event_type="org.plan.changed",
+            metadata={"org_id": str(org_id), "plan": plan},
+        )
+        return success_response(_ORG_RESP_SER(result).data, request=request)
